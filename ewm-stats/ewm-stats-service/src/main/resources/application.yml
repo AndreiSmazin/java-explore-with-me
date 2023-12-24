@@ -13,8 +13,8 @@ spring:
       mode: always
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:db:5432/EmwStatsDb
-    username: EmwDbAdmin
+    url: jdbc:postgresql://localhost:5432/EwmStatsDb
+    username: EwmDbAdmin
     password: admin
 logging:
   level:

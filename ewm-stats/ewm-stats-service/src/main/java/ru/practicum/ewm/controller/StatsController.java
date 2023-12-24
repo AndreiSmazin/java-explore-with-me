@@ -27,8 +27,6 @@ public class StatsController {
                                             @RequestParam(name = "end") String end,
                                             @RequestParam(name = "uris", required = false) String[] uris,
                                             @RequestParam(name = "unique", defaultValue = "false") boolean unique) {
-        System.out.println(start);
-        System.out.println(end);
         return statsService.getStatsByUri(uris, start, end, unique);
     }
 
