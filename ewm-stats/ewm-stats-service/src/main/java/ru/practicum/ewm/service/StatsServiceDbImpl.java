@@ -3,6 +3,7 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriUtils;
 import ru.practicum.ewm.dto.EndpointHitCreateDto;
 import ru.practicum.ewm.dto.EndpointHitResponseDto;
 import ru.practicum.ewm.dto.ViewStatsDto;
@@ -10,7 +11,9 @@ import ru.practicum.ewm.entity.EndpointHit;
 import ru.practicum.ewm.mapper.EndpointHitMapper;
 import ru.practicum.ewm.repository.EndpointHitRepository;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -19,6 +22,7 @@ import java.util.List;
 public class StatsServiceDbImpl implements StatsService {
     private final EndpointHitMapper endpointHitMapper;
     private final EndpointHitRepository endpointHitRepository;
+    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public EndpointHitResponseDto createNewEndpointHit(EndpointHitCreateDto endpointHitDto) {
@@ -30,19 +34,22 @@ public class StatsServiceDbImpl implements StatsService {
     }
 
     @Override
-    public List<ViewStatsDto> getStatsByUri(String[] uris, LocalDateTime start, LocalDateTime end, boolean unique) {
+    public List<ViewStatsDto> getStatsByUri(String[] uris, String start, String end, boolean unique) {
+        LocalDateTime startTime = LocalDateTime.parse(UriUtils.decode(start, StandardCharsets.UTF_8), timeFormatter);
+        LocalDateTime endTime = LocalDateTime.parse(UriUtils.decode(end, StandardCharsets.UTF_8), timeFormatter);
+
         if (unique) {
 
             if (uris == null) {
-                return endpointHitRepository.findStatsUniqueId(start, end);
+                return endpointHitRepository.findStatsUniqueId(startTime, endTime);
             }
-            return endpointHitRepository.findStatsByUriUniqueId(uris, start, end);
+            return endpointHitRepository.findStatsByUriUniqueId(uris, startTime, endTime);
         } else {
 
             if (uris == null) {
-                return endpointHitRepository.findStats(start, end);
+                return endpointHitRepository.findStats(startTime, endTime);
             }
-            return endpointHitRepository.findStatsByUri(uris, start, end);
+            return endpointHitRepository.findStatsByUri(uris, startTime, endTime);
         }
     }
 }
