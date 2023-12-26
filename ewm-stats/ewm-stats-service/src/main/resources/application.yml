@@ -13,9 +13,11 @@ spring:
       mode: always
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/EwmStatsDb
-    username: EwmDbAdmin
-    password: admin
+    url: ${STATS_DATASOURCE_URL}
+    username: ${STATS_DATASOURCE_USER}
+    password: ${STATS_DATASOURCE_PASSWORD}
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
 logging:
   level:
     org:
