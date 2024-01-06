@@ -32,7 +32,7 @@ public class StatsController {
 
     @PostMapping("/hit")
     public EndpointHitResponseDto createEndpointHit(@RequestBody EndpointHitCreateDto endpointHitDto) {
-        log.debug("Received POST-request /hit with and body: {}", endpointHitDto);
+        log.debug("Received POST-request /hit with body: {}", endpointHitDto);
 
         return statsService.createNewEndpointHit(endpointHitDto);
     }
