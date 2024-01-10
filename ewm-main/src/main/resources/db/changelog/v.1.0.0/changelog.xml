@@ -10,5 +10,6 @@
     </changeSet>
 
     <include file="2024-01-04-create-table-categories.xml" relativeToChangelogFile="true"/>
+    <include file="2024-01-09-create-table-users.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

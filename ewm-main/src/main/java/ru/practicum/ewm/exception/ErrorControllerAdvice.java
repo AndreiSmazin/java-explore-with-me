@@ -35,7 +35,7 @@ public class ErrorControllerAdvice {
                     String massage = String.format("Field: %s. Error: %s. Value: %s", error.getField(),
                             error.getDefaultMessage(), error.getRejectedValue());
                     String timestamp = LocalDateTime.now().format(timeFormatter);
-                    return new ApiError("BAD_REQUEST" ,reason, massage, timestamp);
+                    return new ApiError("BAD_REQUEST", reason, massage, timestamp);
                 })
                 .collect(Collectors.toList());
     }
@@ -53,7 +53,7 @@ public class ErrorControllerAdvice {
                     String massage = String.format("Field: %s. Error: %s. Value: %s", getFieldName(error),
                             error.getMessage(), error.getInvalidValue());
                     String timestamp = LocalDateTime.now().format(timeFormatter);
-                    return new ApiError("BAD_REQUEST" ,reason, massage, timestamp);
+                    return new ApiError("BAD_REQUEST", reason, massage, timestamp);
                 })
                 .collect(Collectors.toList());
     }
