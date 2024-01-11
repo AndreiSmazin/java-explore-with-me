@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.category.service.CategoryService;
+import ru.practicum.ewm.event.dto.EventDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
@@ -18,6 +19,8 @@ import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
+import ru.practicum.ewm.participation.entity.ParticipationRequestStatus;
+import ru.practicum.ewm.participation.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.user.service.UserService;
 
 import java.time.LocalDateTime;
@@ -31,6 +34,7 @@ import java.util.stream.Collectors;
 public class EventServiceDbImpl implements EventService {
     private final EventRepository eventRepository;
     private final LocationRepository locationRepository;
+    private final ParticipationRequestRepository participationRequestRepository;
     private final CategoryService categoryService;
     private final UserService userService;
     private final EventMapper eventMapper;
@@ -56,8 +60,8 @@ public class EventServiceDbImpl implements EventService {
     public List<EventShortDto> getEventsOfUser(int from, int size, long userId) {
         return eventRepository.findEventByInitiatorId(PageRequest.of(from, size), userId).stream()
                 .map(eventMapper::eventToEventShortDto)
+                .peek(this::addConfirmedRequestsAndViews)
                 .collect(Collectors.toList());
-        // добавить просмотры и одобреные заявки на участие
     }
 
     @Override
@@ -71,7 +75,8 @@ public class EventServiceDbImpl implements EventService {
     @Override
     public EventFullDto getEventById(long id) {
         EventFullDto eventDto = eventMapper.eventToEventFullDto(checkEvent(id));
-        // добавить просмотры и одобреные заявки на участие
+        addConfirmedRequestsAndViews(eventDto);
+
         return eventDto;
     }
 
@@ -94,7 +99,7 @@ public class EventServiceDbImpl implements EventService {
         }
 
         EventFullDto updatedEventDto = eventMapper.eventToEventFullDto(eventRepository.save(event));
-        // добавить просмотры и одобреные заявки на участие
+        addConfirmedRequestsAndViews(updatedEventDto);
         return updatedEventDto;
     }
 
@@ -113,7 +118,7 @@ public class EventServiceDbImpl implements EventService {
         }
     }
 
-    private <T extends UpdateEventUserRequest> void updateEventFields(Event event, T eventDto){
+    private <T extends UpdateEventUserRequest> void updateEventFields(Event event, T eventDto) {
         if (eventDto.getAnnotation() != null) {
             event.setAnnotation(eventDto.getAnnotation());
         }
@@ -150,5 +155,11 @@ public class EventServiceDbImpl implements EventService {
         if (eventDto.getTitle() != null) {
             event.setTitle(eventDto.getTitle());
         }
+    }
+
+    private <T extends EventDto> void addConfirmedRequestsAndViews(T eventDto) {
+        eventDto.setConfirmedRequests(participationRequestRepository.countByEvent_IdAndStatus(eventDto.getId(),
+                ParticipationRequestStatus.CONFIRMED));
+        // добавить просмотры
     }
 }

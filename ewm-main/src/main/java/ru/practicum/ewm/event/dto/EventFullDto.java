@@ -9,7 +9,7 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 import java.time.LocalDateTime;
 
 @Data
-public class EventFullDto {
+public class EventFullDto extends EventDto {
     private String annotation;
     private CategoryDto category;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

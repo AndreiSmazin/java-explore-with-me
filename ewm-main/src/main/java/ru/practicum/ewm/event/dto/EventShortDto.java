@@ -8,7 +8,7 @@ import ru.practicum.ewm.user.dto.UserShortDto;
 import java.time.LocalDateTime;
 
 @Data
-public class EventShortDto {
+public class EventShortDto extends EventDto {
     private String description;
     private String annotation;
     private CategoryDto category;
