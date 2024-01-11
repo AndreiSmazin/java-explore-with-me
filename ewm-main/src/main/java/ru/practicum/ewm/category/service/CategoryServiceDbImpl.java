@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.category.dto.CategoryCreateDto;
-import ru.practicum.ewm.category.dto.CategoryResponseDto;
+import ru.practicum.ewm.category.dto.CategoryDto;
+import ru.practicum.ewm.category.dto.NewCategoryDto;
 import ru.practicum.ewm.category.entity.Category;
 import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.repository.CategoryRepository;
@@ -23,12 +23,12 @@ public class CategoryServiceDbImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public CategoryResponseDto createNewCategory(CategoryCreateDto categoryDto) {
+    public CategoryDto createNewCategory(NewCategoryDto categoryDto) {
         log.debug("+ createNewCategory: {}", categoryDto);
 
-        Category newCategory = categoryMapper.categoryCreateDtoToCategory(categoryDto);
+        Category newCategory = categoryMapper.newCategoryDtoToCategory(categoryDto);
 
-        return categoryMapper.categoryToCategoryResponseDto(categoryRepository.save(newCategory));
+        return categoryMapper.categoryToCategoryDto(categoryRepository.save(newCategory));
     }
 
     @Override
@@ -45,39 +45,32 @@ public class CategoryServiceDbImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponseDto updateCategory(long id, CategoryCreateDto categoryDto) {
+    public CategoryDto updateCategory(long id, NewCategoryDto categoryDto) {
         log.debug("+ updateCategory: {}, {}", id, categoryDto);
 
-        if (!checkCategory(id)) {
-            String massage = "No Category entity with id " + id + " exists!";
-            throw new ObjectNotFoundException("Category", id, massage);
-        }
+        Category category = checkCategory(id);
+        category.setName(categoryDto.getName());
 
-        Category category = categoryMapper.categoryCreateDtoToCategory(categoryDto);
-        category.setId(id);
-
-        return categoryMapper.categoryToCategoryResponseDto(categoryRepository.save(category));
+        return categoryMapper.categoryToCategoryDto(categoryRepository.save(category));
     }
 
     @Override
-    public boolean checkCategory(long id) {
-        return categoryRepository.existsById(id);
+    public Category checkCategory(long id) {
+        return categoryRepository.findById(id).orElseThrow(() -> {
+            String message = "No Category entity with id " + id + " exists!";
+            throw new ObjectNotFoundException("Category", id, message);
+        });
     }
 
     @Override
-    public List<CategoryResponseDto> getCategories(int from, int size) {
+    public List<CategoryDto> getCategories(int from, int size) {
         return categoryRepository.findAll(PageRequest.of(from, size)).stream()
-                .map(categoryMapper::categoryToCategoryResponseDto)
+                .map(categoryMapper::categoryToCategoryDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public CategoryResponseDto getCategoryById(long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> {
-            String massage = "No Category entity with id " + id + " exists!";
-            throw new ObjectNotFoundException("Category", id, massage);
-        });
-
-        return categoryMapper.categoryToCategoryResponseDto(category);
+    public CategoryDto getCategoryById(long id) {
+        return categoryMapper.categoryToCategoryDto(checkCategory(id));
     }
 }

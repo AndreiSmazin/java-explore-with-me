@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.ewm.category.dto.CategoryCreateDto;
-import ru.practicum.ewm.category.dto.CategoryResponseDto;
+import ru.practicum.ewm.category.dto.CategoryDto;
+import ru.practicum.ewm.category.dto.NewCategoryDto;
 import ru.practicum.ewm.category.service.CategoryService;
 
 import javax.validation.Valid;
@@ -31,7 +31,7 @@ public class CategoryController {
 
     @PostMapping("/admin/categories")
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponseDto createCategory(@Valid @RequestBody CategoryCreateDto categoryDto) {
+    public CategoryDto createCategory(@Valid @RequestBody NewCategoryDto categoryDto) {
         log.debug("Received POST-request /admin/categories with body: {}", categoryDto);
 
         return categoryService.createNewCategory(categoryDto);
@@ -47,8 +47,8 @@ public class CategoryController {
 
     @PatchMapping("/admin/categories/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public CategoryResponseDto updateCategory(@PathVariable(name = "id") long id,
-                                              @Valid @RequestBody CategoryCreateDto categoryDto) {
+    public CategoryDto updateCategory(@PathVariable(name = "id") long id,
+                                      @Valid @RequestBody NewCategoryDto categoryDto) {
         log.debug("Received PATCH-request /admin/categories/{} with body: {}", id, categoryDto);
 
         return categoryService.updateCategory(id, categoryDto);
@@ -56,7 +56,7 @@ public class CategoryController {
 
     @GetMapping("/categories")
     @ResponseStatus(HttpStatus.OK)
-    public List<CategoryResponseDto> getCategories(
+    public List<CategoryDto> getCategories(
             @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
             @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size) {
         return categoryService.getCategories(from, size);
@@ -64,7 +64,7 @@ public class CategoryController {
 
     @GetMapping("/categories/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public CategoryResponseDto getCategoryById(@PathVariable(name = "id") long id) {
+    public CategoryDto getCategoryById(@PathVariable(name = "id") long id) {
         return categoryService.getCategoryById(id);
     }
 }

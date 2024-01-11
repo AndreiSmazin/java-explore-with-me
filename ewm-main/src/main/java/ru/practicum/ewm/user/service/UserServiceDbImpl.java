@@ -8,8 +8,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
-import ru.practicum.ewm.user.dto.UserCreateDto;
-import ru.practicum.ewm.user.dto.UserResponseDto;
+import ru.practicum.ewm.user.dto.NewUserDto;
+import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.entity.QUser;
 import ru.practicum.ewm.user.entity.User;
 import ru.practicum.ewm.user.mapper.UserMapper;
@@ -26,12 +26,12 @@ public class UserServiceDbImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public UserResponseDto createNewUser(UserCreateDto userDto) {
+    public UserDto createNewUser(NewUserDto userDto) {
         log.debug("+ createNewUser: {}", userDto);
 
-        User user = userMapper.userCreateDtoToUser(userDto);
+        User user = userMapper.newUserDtoToUser(userDto);
 
-        return userMapper.userToUserResponseDto(userRepository.save(user));
+        return userMapper.userToUserDto(userRepository.save(user));
     }
 
     @Override
@@ -46,15 +46,23 @@ public class UserServiceDbImpl implements UserService {
     }
 
     @Override
-    public List<UserResponseDto> getUsers(int from, int size, Long[] ids) {
+    public List<UserDto> getUsers(int from, int size, Long[] ids) {
         BooleanExpression predicates = Expressions.asBoolean(true).isTrue();
 
-        if(ids != null) {
+        if (ids != null) {
             predicates = predicates.and(QUser.user.id.in(ids));
         }
 
         return userRepository.findAll(predicates, PageRequest.of(from, size)).stream()
-                .map(userMapper::userToUserResponseDto)
+                .map(userMapper::userToUserDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public User checkUser(long id) {
+        return userRepository.findById(id).orElseThrow(() -> {
+            String message = "No User entity with id " + id + " exists!";
+            throw new ObjectNotFoundException("User", id, message);
+        });
     }
 }

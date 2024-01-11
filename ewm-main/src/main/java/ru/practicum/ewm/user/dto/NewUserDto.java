@@ -7,7 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Data
-public class UserCreateDto {
+public class NewUserDto {
     @NotBlank
     @Email
     @Size(min = 6, max = 254)

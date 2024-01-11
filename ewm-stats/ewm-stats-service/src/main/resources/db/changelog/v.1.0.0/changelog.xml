@@ -9,9 +9,6 @@
         <tagDatabase tag="v.1.0.0"/>
     </changeSet>
 
-    <include file="2024-01-04-create-table-categories.xml" relativeToChangelogFile="true"/>
-    <include file="2024-01-09-create-table-users.xml" relativeToChangelogFile="true"/>
-    <include file="2024-01-10-create-table-locations.xml" relativeToChangelogFile="true"/>
-    <include file="2024-01-10-create-table-events.xml" relativeToChangelogFile="true"/>
+    <include file="2023-12-27-create-table.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

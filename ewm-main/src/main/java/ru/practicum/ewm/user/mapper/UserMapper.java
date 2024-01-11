@@ -1,15 +1,18 @@
 package ru.practicum.ewm.user.mapper;
 
 import org.mapstruct.Mapper;
-import ru.practicum.ewm.user.dto.UserCreateDto;
-import ru.practicum.ewm.user.dto.UserResponseDto;
+import ru.practicum.ewm.user.dto.NewUserDto;
+import ru.practicum.ewm.user.dto.UserDto;
+import ru.practicum.ewm.user.dto.UserShortDto;
 import ru.practicum.ewm.user.entity.User;
 
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @Mapper(componentModel = SPRING)
 public interface UserMapper {
-    User userCreateDtoToUser(UserCreateDto userDto);
+    User newUserDtoToUser(NewUserDto userDto);
 
-    UserResponseDto userToUserResponseDto(User user);
+    UserDto userToUserDto(User user);
+
+    UserShortDto userToUserShortDto(User user);
 }

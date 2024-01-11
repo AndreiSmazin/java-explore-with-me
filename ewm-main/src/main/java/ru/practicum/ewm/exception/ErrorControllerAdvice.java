@@ -26,16 +26,18 @@ public class ErrorControllerAdvice {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public List<ApiError> onMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        e.getBindingResult().getFieldErrors().forEach(error -> log.error("Validation error: incorrect value '{}'" +
-                " of {}, {}", error.getRejectedValue(), error.getField(), error.getDefaultMessage()));
+        List<String> messages = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s", error.getField(),
+                        error.getDefaultMessage(), error.getRejectedValue()))
+                .peek(message -> log.error("MethodArgumentNotValidException: " + message))
+                .collect(Collectors.toList());
 
-        return e.getBindingResult().getFieldErrors().stream()
-                .map(error -> {
-                    String reason = "Incorrectly made request.";
-                    String massage = String.format("Field: %s. Error: %s. Value: %s", error.getField(),
-                            error.getDefaultMessage(), error.getRejectedValue());
+        String reason = "Incorrectly made request.";
+
+        return messages.stream()
+                .map(message -> {
                     String timestamp = LocalDateTime.now().format(timeFormatter);
-                    return new ApiError("BAD_REQUEST", reason, massage, timestamp);
+                    return new ApiError("BAD_REQUEST", reason, message, timestamp);
                 })
                 .collect(Collectors.toList());
     }
@@ -44,16 +46,18 @@ public class ErrorControllerAdvice {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public List<ApiError> onConstraintViolationException(ConstraintViolationException e) {
-        e.getConstraintViolations().forEach(error -> log.error("Validation error: incorrect value" +
-                " '{}' of {}, {}", error.getInvalidValue(), getFieldName(error), error.getMessage()));
+        List<String> messages = e.getConstraintViolations().stream()
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s", getFieldName(error),
+                        error.getMessage(), error.getInvalidValue()))
+                .peek(message -> log.error("ConstraintViolationException: " + message))
+                .collect(Collectors.toList());
 
-        return e.getConstraintViolations().stream()
-                .map(error -> {
-                    String reason = "Incorrectly made request.";
-                    String massage = String.format("Field: %s. Error: %s. Value: %s", getFieldName(error),
-                            error.getMessage(), error.getInvalidValue());
+        String reason = "Incorrectly made request.";
+
+        return messages.stream()
+                .map(message -> {
                     String timestamp = LocalDateTime.now().format(timeFormatter);
-                    return new ApiError("BAD_REQUEST", reason, massage, timestamp);
+                    return new ApiError("BAD_REQUEST", reason, message, timestamp);
                 })
                 .collect(Collectors.toList());
     }
@@ -62,36 +66,48 @@ public class ErrorControllerAdvice {
     @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
     public ApiError onDataIntegrityViolationException(DataIntegrityViolationException e) {
-        log.error("DataIntegrityViolationException: {}", e.getMessage());
+        String message = e.getMessage();
+        log.error("DataIntegrityViolationException: {}", message);
 
         String reason = "Integrity constraint has been violated.";
-        String massage = e.getMessage();
         String timestamp = LocalDateTime.now().format(timeFormatter);
-        return new ApiError("CONFLICT", reason, massage, timestamp);
+        return new ApiError("CONFLICT", reason, message, timestamp);
     }
 
     @ExceptionHandler(ObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
     public ApiError onObjectNotFoundException(ObjectNotFoundException e) {
-        log.error("ObjectNotFoundException: {}", e.getMessage());
+        String message = String.format("%s with id=%s was not found", e.getObjectType(), e.getObjectId());
+        log.error("ObjectNotFoundException: {}", message);
 
         String reason = "The required object was not found.";
-        String massage = String.format("%s with id=%s was not found", e.getObjectType(), e.getObjectId());
         String timestamp = LocalDateTime.now().format(timeFormatter);
-        return new ApiError("NOT_FOUND", reason, massage, timestamp);
+        return new ApiError("NOT_FOUND", reason, message, timestamp);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ApiError onMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
-        log.error("MethodArgumentTypeMismatchException: {}", e.getMessage());
+        String message = e.getMessage();
+        log.error("MethodArgumentTypeMismatchException: {}", message);
 
         String reason = "Incorrectly made request.";
-        String massage = e.getMessage();
         String timestamp = LocalDateTime.now().format(timeFormatter);
-        return new ApiError("BAD_REQUEST", reason, massage, timestamp);
+        return new ApiError("BAD_REQUEST", reason, message, timestamp);
+    }
+
+    @ExceptionHandler(ViolationOperationRulesException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public ApiError onViolationOperationRulesException(ViolationOperationRulesException e) {
+        String message = e.getMessage();
+        log.error("ViolationOperationRulesException: {}", message);
+
+        String reason = "For the requested operation the conditions are not met.";
+        String timestamp = LocalDateTime.now().format(timeFormatter);
+        return new ApiError("FORBIDDEN", reason, message, timestamp);
     }
 
     private static String getFieldName(ConstraintViolation constraintViolation) {
