@@ -7,8 +7,6 @@ import ru.practicum.ewm.participation.entity.ParticipationRequestStatus;
 import java.util.List;
 
 public interface ParticipationRequestRepository extends JpaRepository<ParticipationRequest, Long> {
-    long countByEvent_IdAndStatus(Long eventId, ParticipationRequestStatus status);
-
     List<ParticipationRequest> findByRequester_Id(Long userId);
 
     List<ParticipationRequest> findByEvent_Id(Long eventId);

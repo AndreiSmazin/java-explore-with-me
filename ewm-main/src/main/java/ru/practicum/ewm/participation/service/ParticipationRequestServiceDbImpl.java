@@ -7,6 +7,7 @@ import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.entity.Event;
 import ru.practicum.ewm.event.entity.EventState;
+import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
@@ -33,6 +34,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
     private final ParticipationRequestMapper participationRequestMapper;
     private final EventService eventService;
     private final UserService userService;
+    private final EventRepository eventRepository;
 
     @Override
     public ParticipationRequestDto createNewParticipationRequest(long userId, long eventId) {
@@ -50,6 +52,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
 
         if (!event.isRequestModeration() || event.getParticipantLimit() == 0) {
             participationRequest.setStatus(ParticipationRequestStatus.CONFIRMED);
+            increaseConfirmedRequests(event, 1);
         } else {
             participationRequest.setStatus(ParticipationRequestStatus.PENDING);
         }
@@ -70,6 +73,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         log.debug("+ cancelParticipationRequestByUser: {}, {}", userId, id);
 
         ParticipationRequest participationRequest = checkParticipationRequest(id);
+        validateParticipationRequest(participationRequest);
 
         validateRequester(participationRequest, userId);
         participationRequest.setStatus(ParticipationRequestStatus.REJECTED);
@@ -100,8 +104,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
 
         Event event = eventService.checkEvent(eventId);
 
-        long participants = participationRequestRepository.countByEvent_IdAndStatus(event.getId(),
-                ParticipationRequestStatus.CONFIRMED);
+        long participants = event.getConfirmedRequests();
         if (event.getParticipantLimit() == participants && event.getParticipantLimit() != 0) {
             throw new ViolationOperationRulesException("Field: eventId. Error: participation limit of event is" +
                     " reached. Value: " + event.getId());
@@ -116,6 +119,8 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         if (eventRequestStatusUpdateRequest.getStatus().equals(ParticipationRequestStatus.CONFIRMED)) {
             confirmedParticipationRequests = confirmParticipationRequests(participationRequests,
                     currentParticipationLimit);
+
+            increaseConfirmedRequests(event, confirmedParticipationRequests.size());
 
             if (confirmedParticipationRequests.size() == currentParticipationLimit) {
                 rejectedParticipationRequests = rejectParticipationRequests(
@@ -143,10 +148,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
             throw new ViolationOperationRulesException("Field: eventId. Error: event must not be unpublished. " +
                     "Value: " + event.getId());
         }
-
-        long participants = participationRequestRepository.countByEvent_IdAndStatus(event.getId(),
-                ParticipationRequestStatus.CONFIRMED);
-        if (event.getParticipantLimit() == participants && event.getParticipantLimit() != 0) {
+        if (event.getParticipantLimit() == event.getConfirmedRequests() && event.getParticipantLimit() != 0) {
             throw new ViolationOperationRulesException("Field: eventId. Error: participation limit of event is" +
                     " reached. Value: " + event.getId());
         }
@@ -200,5 +202,10 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
                 .collect(Collectors.toList()));
 
         return eventRequestStatusUpdateResult;
+    }
+
+    private void increaseConfirmedRequests(Event event, int number){
+        long participants = event.getConfirmedRequests() + number;
+        eventRepository.updateConfirmedRequests(event.getId(), participants);
     }
 }

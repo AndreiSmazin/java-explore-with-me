@@ -42,6 +42,9 @@ public class Event {
     @Column(name = "description", nullable = false)
     private String description;
 
+    @Column(name = "confirmed_requests", nullable = false)
+    private long confirmedRequests;
+
     @Column(name = "event_date", nullable = false)
     private LocalDateTime eventDate;
 
@@ -75,6 +78,9 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private EventState state;
 
+    @Column(name = "views", nullable = false)
+    private long views;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -93,8 +99,10 @@ public class Event {
         return "Event{" +
                 "id=" + id +
                 ", annotation='" + annotation + '\'' +
-                ", category=" + category +
+                ", category=" + category.getId() +
                 ", description='" + description + '\'' +
+                ", confirmedRequests='" + confirmedRequests + '\'' +
+                ", views='" + views + '\'' +
                 ", eventDate=" + eventDate +
                 ", location=" + location +
                 ", paid=" + paid +
@@ -103,7 +111,7 @@ public class Event {
                 ", title='" + title + '\'' +
                 ", createdOn=" + createdOn +
                 ", publishedOn=" + publishedOn +
-                ", initiator=" + initiator +
+                ", initiator=" + initiator.getId() +
                 ", state=" + state +
                 '}';
     }

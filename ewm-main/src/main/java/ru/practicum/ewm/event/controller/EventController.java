@@ -20,13 +20,16 @@ import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.entity.EventState;
+import ru.practicum.ewm.event.entity.SortingBy;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.participation.dto.ParticipationRequestDto;
 import ru.practicum.ewm.participation.service.ParticipationRequestService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -94,7 +97,7 @@ public class EventController {
 
     @GetMapping("/admin/events")
     @ResponseStatus(HttpStatus.OK)
-    public List<EventFullDto> getEvents(
+    public List<EventFullDto> getEventsForAdmin(
             @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
             @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(name = "users") Long[] users,
@@ -114,5 +117,30 @@ public class EventController {
         log.debug("Received PATCH-request /admin/events/{} with body: {}", id, eventDto);
 
         return eventService.updateEventByAdmin(id, eventDto);
+    }
+
+    @GetMapping("/events")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventShortDto> getEventsForPublic(
+            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "text", required = false) @NotBlank String text,
+            @RequestParam(name = "categories", required = false) Long[] categories,
+            @RequestParam(name = "paid", required = false) Boolean paid,
+            @RequestParam(name = "rangeStart", required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+            @RequestParam(name = "rangeEnd", required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+            @RequestParam(name = "onlyAvailable", defaultValue = "false") boolean onlyAvailable,
+            @RequestParam(name = "sort", required = false) SortingBy sortingBy,
+            HttpServletRequest request) {
+        return eventService.getEventsWithFilters(from, size, text, categories, paid, rangeStart, rangeEnd,
+                onlyAvailable, sortingBy, request);
+    }
+
+    @GetMapping("/events/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public EventFullDto getEventForPublic(@PathVariable(name = "id") long id, HttpServletRequest request) {
+        return eventService.getPublishedEvent(id, request);
     }
 }

@@ -62,6 +62,14 @@
             <column name="state" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
+
+            <column name="confirmed_requests" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="views" type="bigint">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 

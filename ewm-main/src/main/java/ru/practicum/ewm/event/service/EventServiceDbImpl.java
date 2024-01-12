@@ -6,7 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.category.service.CategoryService;
-import ru.practicum.ewm.event.dto.EventDto;
+import ru.practicum.ewm.client.StatsClient;
+import ru.practicum.ewm.dto.EndpointHitCreateDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
@@ -16,6 +17,7 @@ import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.entity.AdminEventStateAction;
 import ru.practicum.ewm.event.entity.Event;
 import ru.practicum.ewm.event.entity.EventState;
+import ru.practicum.ewm.event.entity.SortingBy;
 import ru.practicum.ewm.event.entity.UserEventStateAction;
 import ru.practicum.ewm.event.entity.QEvent;
 import ru.practicum.ewm.event.mapper.EventMapper;
@@ -24,11 +26,11 @@ import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
-import ru.practicum.ewm.participation.entity.ParticipationRequestStatus;
-import ru.practicum.ewm.participation.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.user.service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,11 +40,11 @@ import java.util.stream.Collectors;
 public class EventServiceDbImpl implements EventService {
     private final EventRepository eventRepository;
     private final LocationRepository locationRepository;
-    private final ParticipationRequestRepository participationRequestRepository;
     private final CategoryService categoryService;
     private final UserService userService;
     private final EventMapper eventMapper;
     private final LocationMapper locationMapper;
+    private final StatsClient statsClient;
 
     @Override
     public EventFullDto createNewEvent(long userId, NewEventDto eventDto) {
@@ -64,7 +66,6 @@ public class EventServiceDbImpl implements EventService {
     public List<EventShortDto> getEventsOfUser(int from, int size, long userId) {
         return eventRepository.findEventByInitiatorId(PageRequest.of(from, size), userId).stream()
                 .map(eventMapper::eventToEventShortDto)
-                .peek(this::addConfirmedRequestsAndViews)
                 .collect(Collectors.toList());
     }
 
@@ -78,10 +79,7 @@ public class EventServiceDbImpl implements EventService {
 
     @Override
     public EventFullDto getEventById(long id) {
-        EventFullDto eventDto = eventMapper.eventToEventFullDto(checkEvent(id));
-        addConfirmedRequestsAndViews(eventDto);
-
-        return eventDto;
+        return eventMapper.eventToEventFullDto(checkEvent(id));
     }
 
     @Override
@@ -104,10 +102,7 @@ public class EventServiceDbImpl implements EventService {
             }
         }
 
-        EventFullDto updatedEventDto = eventMapper.eventToEventFullDto(eventRepository.save(event));
-        addConfirmedRequestsAndViews(updatedEventDto);
-
-        return updatedEventDto;
+        return eventMapper.eventToEventFullDto(eventRepository.save(event));
     }
 
     @Override
@@ -122,7 +117,6 @@ public class EventServiceDbImpl implements EventService {
 
         return eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
                 .map(eventMapper::eventToEventFullDto)
-                .peek(this::addConfirmedRequestsAndViews)
                 .collect(Collectors.toList());
     }
 
@@ -141,7 +135,8 @@ public class EventServiceDbImpl implements EventService {
                 LocalDateTime publicationTime = LocalDateTime.now();
 
                 if (event.getEventDate().isBefore(publicationTime.plusHours(1L))) {
-                    throw new ViolationOperationRulesException("EventDate must be not earlier then 1 hour after publication");
+                    throw new ViolationOperationRulesException("EventDate must be not earlier then 1 hour after " +
+                            "publication");
                 }
 
                 event.setState(EventState.PUBLISHED);
@@ -154,10 +149,75 @@ public class EventServiceDbImpl implements EventService {
             }
         }
 
-        EventFullDto updatedEventDto = eventMapper.eventToEventFullDto(eventRepository.save(event));
-        addConfirmedRequestsAndViews(updatedEventDto);
+        return eventMapper.eventToEventFullDto(eventRepository.save(event));
+    }
 
-        return updatedEventDto;
+    @Override
+    public List<EventShortDto> getEventsWithFilters(int from, int size, String text, Long[] categories, Boolean paid,
+                                                    LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                                    boolean onlyAvailable, SortingBy sortingBy,
+                                                    HttpServletRequest request) {
+        BooleanExpression predicates = QEvent.event.state.eq(EventState.PUBLISHED);
+
+        if (text != null) {
+            predicates = predicates.and(QEvent.event.annotation.likeIgnoreCase("%" + text + "%")
+                    .or(QEvent.event.description.likeIgnoreCase("%" + text + "%")));
+        }
+        if (categories != null) {
+            predicates = predicates.and(QEvent.event.category.id.in(categories));
+        }
+        if (paid != null) {
+            predicates = predicates.and(QEvent.event.paid.eq(paid));
+        }
+        if (rangeStart != null) {
+            predicates = predicates.and(QEvent.event.eventDate.after(rangeStart));
+        }
+        if (rangeEnd != null) {
+            predicates = predicates.and(QEvent.event.eventDate.before(rangeEnd));
+        }
+
+        if (rangeStart == null && rangeEnd == null) {
+            predicates = predicates.and(QEvent.event.eventDate.after(LocalDateTime.now()));
+        }
+
+        if (onlyAvailable) {
+            predicates = predicates.and(QEvent.event.confirmedRequests.ne(QEvent.event.participantLimit.longValue())
+                    .or(QEvent.event.participantLimit.eq(0)));
+        }
+
+        List<EventShortDto> events = eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
+                .map(eventMapper::eventToEventShortDto)
+                .collect(Collectors.toList());
+
+        if (sortingBy != null) {
+            if (sortingBy.equals(SortingBy.VIEWS)) {
+                events.sort(Comparator.comparingLong(EventShortDto::getViews));
+            } else if (sortingBy.equals(SortingBy.EVENT_DATE)) {
+                events.sort(Comparator.comparing(EventShortDto::getEventDate));
+            }
+        }
+
+        sendStatistics(request);
+
+        return events;
+    }
+
+    @Override
+    public EventFullDto getPublishedEvent(long id, HttpServletRequest request) {
+        Event event = eventRepository.findEventByIdAndState(id, EventState.PUBLISHED).orElseThrow(() -> {
+            String message = "No Event entity with id " + id + " exists!";
+            throw new ObjectNotFoundException("Event", id, message);
+        });
+
+        increaseViews(event);
+        sendStatistics(request);
+
+        return eventMapper.eventToEventFullDto(event);
+    }
+
+    private void increaseViews(Event event){
+        long views = event.getViews() + 1;
+        eventRepository.updateViews(event.getId(), views);
     }
 
     private void validateEventDate(LocalDateTime eventDate) {
@@ -218,9 +278,13 @@ public class EventServiceDbImpl implements EventService {
         }
     }
 
-    private <T extends EventDto> void addConfirmedRequestsAndViews(T eventDto) {
-        eventDto.setConfirmedRequests(participationRequestRepository.countByEvent_IdAndStatus(eventDto.getId(),
-                ParticipationRequestStatus.CONFIRMED));
-        // добавить просмотры
+    private void sendStatistics(HttpServletRequest request) {
+        EndpointHitCreateDto endpointDto = new EndpointHitCreateDto();
+        endpointDto.setApp("ru.practicum.ewm.EwmMain");
+        endpointDto.setUri(request.getRequestURI());
+        endpointDto.setIp(request.getRemoteAddr());
+        endpointDto.setTimestamp(LocalDateTime.now());
+
+        statsClient.postEndpointHit(endpointDto);
     }
 }
