@@ -2,7 +2,7 @@ package ru.practicum.ewm.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import ru.practicum.ewm.event.entity.UserEventStateAction;
+import ru.practicum.ewm.event.entity.AdminEventStateAction;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Data
-public class UpdateEventUserRequest extends UpdateEventRequest {
+public class UpdateEventAdminRequest extends UpdateEventRequest {
     @Size(min = 20, max = 2000)
     private String annotation;
 
@@ -32,7 +32,7 @@ public class UpdateEventUserRequest extends UpdateEventRequest {
 
     private Boolean requestModeration;
 
-    private UserEventStateAction stateAction;
+    private AdminEventStateAction stateAction;
 
     @Size(min = 3, max = 120)
     private String title;

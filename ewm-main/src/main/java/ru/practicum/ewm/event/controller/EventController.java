@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,7 +17,9 @@ import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.entity.EventState;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.participation.dto.ParticipationRequestDto;
 import ru.practicum.ewm.participation.service.ParticipationRequestService;
@@ -24,6 +27,7 @@ import ru.practicum.ewm.participation.service.ParticipationRequestService;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -86,5 +90,29 @@ public class EventController {
 
         return participationRequestService.updateParticipationRequestsOfEvent(userId, id,
                 eventRequestStatusUpdateRequest);
+    }
+
+    @GetMapping("/admin/events")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventFullDto> getEvents(
+            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "users") Long[] users,
+            @RequestParam(name = "states") EventState[] states,
+            @RequestParam(name = "categories") Long[] categories,
+            @RequestParam(name = "rangeStart")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+            @RequestParam(name = "rangeEnd")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd) {
+        return eventService.getEvents(from, size, users, states, categories, rangeStart, rangeEnd);
+    }
+
+    @PatchMapping("/admin/events/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public EventFullDto updateEventByAdmin(@PathVariable(name = "id") long id,
+                                           @Valid @RequestBody UpdateEventAdminRequest eventDto) {
+        log.debug("Received PATCH-request /admin/events/{} with body: {}", id, eventDto);
+
+        return eventService.updateEventByAdmin(id, eventDto);
     }
 }

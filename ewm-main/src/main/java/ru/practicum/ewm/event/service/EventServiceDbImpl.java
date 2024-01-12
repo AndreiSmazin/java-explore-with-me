@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.service;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -9,10 +10,14 @@ import ru.practicum.ewm.event.dto.EventDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
+import ru.practicum.ewm.event.dto.UpdateEventRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.entity.AdminEventStateAction;
 import ru.practicum.ewm.event.entity.Event;
 import ru.practicum.ewm.event.entity.EventState;
-import ru.practicum.ewm.event.entity.EventStateAction;
+import ru.practicum.ewm.event.entity.UserEventStateAction;
+import ru.practicum.ewm.event.entity.QEvent;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.repository.EventRepository;
@@ -24,7 +29,6 @@ import ru.practicum.ewm.participation.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,24 +93,77 @@ public class EventServiceDbImpl implements EventService {
 
         updateEventFields(event, eventDto);
 
-        if (eventDto.getStateAction().equals(EventStateAction.CANCEL_REVIEW)
-                && event.getState().equals(EventState.PENDING)) {
-            event.setState(EventState.CANCELED);
-        }
-        if (eventDto.getStateAction().equals(EventStateAction.SEND_TO_REVIEW)
-                && event.getState().equals(EventState.CANCELED)) {
-            event.setState(EventState.PENDING);
+        if (eventDto.getStateAction() != null) {
+            if (eventDto.getStateAction().equals(UserEventStateAction.CANCEL_REVIEW)
+                    && event.getState().equals(EventState.PENDING)) {
+                event.setState(EventState.CANCELED);
+            }
+            if (eventDto.getStateAction().equals(UserEventStateAction.SEND_TO_REVIEW)
+                    && event.getState().equals(EventState.CANCELED)) {
+                event.setState(EventState.PENDING);
+            }
         }
 
         EventFullDto updatedEventDto = eventMapper.eventToEventFullDto(eventRepository.save(event));
         addConfirmedRequestsAndViews(updatedEventDto);
+
+        return updatedEventDto;
+    }
+
+    @Override
+    public List<EventFullDto> getEvents(int from, int size, Long[] users, EventState[] states, Long[] categories,
+                                        LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+        BooleanExpression usersPredicate = QEvent.event.initiator.id.in(users);
+        BooleanExpression statesPredicate = QEvent.event.state.in(states);
+        BooleanExpression categoriesPredicate = QEvent.event.category.id.in(categories);
+        BooleanExpression rangePredicate = QEvent.event.eventDate.between(rangeStart, rangeEnd);
+
+        BooleanExpression predicates = usersPredicate.and(statesPredicate).and(categoriesPredicate).and(rangePredicate);
+
+        return eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
+                .map(eventMapper::eventToEventFullDto)
+                .peek(this::addConfirmedRequestsAndViews)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public EventFullDto updateEventByAdmin(long id, UpdateEventAdminRequest eventDto) {
+        log.debug("+ updateEventByAdmin: {}, {}", id, eventDto);
+
+        Event event = checkEvent(id);
+
+        updateEventFields(event, eventDto);
+
+        if (eventDto.getStateAction() != null) {
+            if (eventDto.getStateAction().equals(AdminEventStateAction.PUBLISH_EVENT)) {
+                validateStateForPublishing(event.getState());
+
+                LocalDateTime publicationTime = LocalDateTime.now();
+
+                if (event.getEventDate().isBefore(publicationTime.plusHours(1L))) {
+                    throw new ViolationOperationRulesException("EventDate must be not earlier then 1 hour after publication");
+                }
+
+                event.setState(EventState.PUBLISHED);
+                event.setPublishedOn(publicationTime);
+            }
+            if (eventDto.getStateAction().equals(AdminEventStateAction.REJECT_EVENT)) {
+                validateState(event.getState());
+
+                event.setState(EventState.CANCELED);
+            }
+        }
+
+        EventFullDto updatedEventDto = eventMapper.eventToEventFullDto(eventRepository.save(event));
+        addConfirmedRequestsAndViews(updatedEventDto);
+
         return updatedEventDto;
     }
 
     private void validateEventDate(LocalDateTime eventDate) {
         if (eventDate.isBefore(LocalDateTime.now().plusHours(2L))) {
-            throw new ViolationOperationRulesException("Field: eventDate. Error: должно содержать дату, которая еще " +
-                    "не наступила. Value: " + eventDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            throw new ViolationOperationRulesException("EventDate must be not earlier then 2 hour after event " +
+                    "creation or changing");
         }
     }
 
@@ -116,7 +173,13 @@ public class EventServiceDbImpl implements EventService {
         }
     }
 
-    private <T extends UpdateEventUserRequest> void updateEventFields(Event event, T eventDto) {
+    private void validateStateForPublishing(EventState state) {
+        if (!state.equals(EventState.PENDING)) {
+            throw new ViolationOperationRulesException("Only pending events can be published");
+        }
+    }
+
+    private <T extends UpdateEventRequest> void updateEventFields(Event event, T eventDto) {
         if (eventDto.getAnnotation() != null) {
             event.setAnnotation(eventDto.getAnnotation());
         }
