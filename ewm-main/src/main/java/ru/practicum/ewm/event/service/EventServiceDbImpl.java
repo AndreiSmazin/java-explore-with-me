@@ -103,8 +103,6 @@ public class EventServiceDbImpl implements EventService {
         return updatedEventDto;
     }
 
-
-
     private void validateEventDate(LocalDateTime eventDate) {
         if (eventDate.isBefore(LocalDateTime.now().plusHours(2L))) {
             throw new ViolationOperationRulesException("Field: eventDate. Error: должно содержать дату, которая еще " +

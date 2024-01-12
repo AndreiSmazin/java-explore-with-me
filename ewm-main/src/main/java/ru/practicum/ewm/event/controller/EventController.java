@@ -12,10 +12,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.participation.dto.ParticipationRequestDto;
+import ru.practicum.ewm.participation.service.ParticipationRequestService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -27,6 +31,7 @@ import java.util.List;
 @Slf4j
 public class EventController {
     private final EventService eventService;
+    private final ParticipationRequestService participationRequestService;
 
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
@@ -61,5 +66,25 @@ public class EventController {
         log.debug("Received PATCH-request /users/{}/events/{} with body: {}", userId, id, eventDto);
 
         return eventService.updateEventByUser(userId, id, eventDto);
+    }
+
+    @GetMapping("/users/{userId}/events/{id}/requests")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ParticipationRequestDto> getParticipationRequestsOfEvent(@PathVariable(name = "userId") long userId,
+                                                                         @PathVariable(name = "id") long id) {
+        return participationRequestService.getParticipationRequestsOfEvent(userId, id);
+    }
+
+    @PatchMapping("/users/{userId}/events/{id}/requests")
+    @ResponseStatus(HttpStatus.OK)
+    public EventRequestStatusUpdateResult updateParticipationRequestsOfEvent(
+            @PathVariable(name = "userId") long userId,
+            @PathVariable(name = "id") long id,
+            @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+        log.debug("Received PATCH-request /users/{}/events/{}/requests with body: {}", userId, id,
+                eventRequestStatusUpdateRequest);
+
+        return participationRequestService.updateParticipationRequestsOfEvent(userId, id,
+                eventRequestStatusUpdateRequest);
     }
 }

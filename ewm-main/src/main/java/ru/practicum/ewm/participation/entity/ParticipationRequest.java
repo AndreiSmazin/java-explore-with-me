@@ -64,8 +64,8 @@ public class ParticipationRequest {
         return "ParticipationRequest{" +
                 "id=" + id +
                 ", created=" + created +
-                ", event=" + event +
-                ", user=" + requester +
+                ", event=" + event.getId() +
+                ", user=" + requester.getId() +
                 ", status=" + status +
                 '}';
     }
