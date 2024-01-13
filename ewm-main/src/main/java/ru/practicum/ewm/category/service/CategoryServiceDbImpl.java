@@ -10,7 +10,9 @@ import ru.practicum.ewm.category.dto.NewCategoryDto;
 import ru.practicum.ewm.category.entity.Category;
 import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.repository.CategoryRepository;
+import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
+import ru.practicum.ewm.exception.ViolationOperationRulesException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class CategoryServiceDbImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
     private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
 
     @Override
     public CategoryDto createNewCategory(NewCategoryDto categoryDto) {
@@ -35,7 +38,9 @@ public class CategoryServiceDbImpl implements CategoryService {
     public void deleteCategory(long id) {
         log.debug("+ deleteCategory: {}", id);
 
-        //Сделать валидацию отсутствия событий
+        if (eventRepository.countByCategory_Id(id) != 0) {
+            throw new ViolationOperationRulesException("The category is not empty");
+        }
 
         try {
             categoryRepository.deleteById(id);

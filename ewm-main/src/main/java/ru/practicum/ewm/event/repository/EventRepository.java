@@ -31,4 +31,5 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
 
     Optional<Event> findEventByIdAndState(Long id, EventState state);
 
+    long countByCategory_Id(long categoryId);
 }
