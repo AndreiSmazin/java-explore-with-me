@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.category.service.CategoryService;
 import ru.practicum.ewm.client.StatsClient;
 import ru.practicum.ewm.dto.EndpointHitCreateDto;
+import ru.practicum.ewm.dto.ViewStatsDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
@@ -209,15 +210,10 @@ public class EventServiceDbImpl implements EventService {
             throw new ObjectNotFoundException("Event", id, message);
         });
 
-        increaseViews(event);
         sendStatistics(request);
+        increaseViews(event, request);
 
         return eventMapper.eventToEventFullDto(event);
-    }
-
-    private void increaseViews(Event event) {
-        long views = event.getViews() + 1;
-        eventRepository.updateViews(event.getId(), views);
     }
 
     private void validateEventDate(LocalDateTime eventDate) {
@@ -286,5 +282,15 @@ public class EventServiceDbImpl implements EventService {
         endpointDto.setTimestamp(LocalDateTime.now());
 
         statsClient.postEndpointHit(endpointDto);
+    }
+
+    private void increaseViews(Event event, HttpServletRequest request) {
+        String[] uris = {request.getRequestURI()};
+        LocalDateTime start = event.getPublishedOn();
+        LocalDateTime end = LocalDateTime.now();
+        List<ViewStatsDto> stats = statsClient.getViewStats(start, end, uris, true);
+
+        long views = stats.get(0).getHits();
+        eventRepository.updateViews(event.getId(), views);
     }
 }
