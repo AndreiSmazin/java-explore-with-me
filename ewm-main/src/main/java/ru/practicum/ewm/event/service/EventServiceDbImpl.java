@@ -215,7 +215,7 @@ public class EventServiceDbImpl implements EventService {
         return eventMapper.eventToEventFullDto(event);
     }
 
-    private void increaseViews(Event event){
+    private void increaseViews(Event event) {
         long views = event.getViews() + 1;
         eventRepository.updateViews(event.getId(), views);
     }

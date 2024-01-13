@@ -204,7 +204,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         return eventRequestStatusUpdateResult;
     }
 
-    private void increaseConfirmedRequests(Event event, int number){
+    private void increaseConfirmedRequests(Event event, int number) {
         long participants = event.getConfirmedRequests() + number;
         eventRepository.updateConfirmedRequests(event.getId(), participants);
     }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="2024-01-13-create-table-events_of_compilations" author="Andrey">
+        <createTable tableName="events_of_compilations">
+            <column name="compilation_id" type="bigint">
+                <constraints foreignKeyName="events_of_compilations_compilation_id_compilations_id"
+                             references="compilations(id)"/>
+            </column>
+
+            <column name="event_id" type="bigint">
+                <constraints foreignKeyName="events_of_compilations_event_id_events_id" references="events(id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

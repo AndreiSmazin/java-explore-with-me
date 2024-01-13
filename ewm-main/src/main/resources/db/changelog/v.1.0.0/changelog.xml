@@ -14,5 +14,7 @@
     <include file="2024-01-10-create-table-locations.xml" relativeToChangelogFile="true"/>
     <include file="2024-01-10-create-table-events.xml" relativeToChangelogFile="true"/>
     <include file="2024-01-11-create-table-participants.xml" relativeToChangelogFile="true"/>
+    <include file="2024-01-13-create-table-compilations.xml" relativeToChangelogFile="true"/>
+    <include file="2024-01-13-create-table-events_of_compilations.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
