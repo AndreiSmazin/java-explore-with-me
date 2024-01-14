@@ -58,7 +58,7 @@ public class CategoryController {
     @ResponseStatus(HttpStatus.OK)
     public List<CategoryDto> getCategories(
             @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size) {
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         return categoryService.getCategories(from, size);
     }
 

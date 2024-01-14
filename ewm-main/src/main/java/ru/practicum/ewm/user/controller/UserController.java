@@ -50,7 +50,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public List<UserDto> getUsers(
             @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
             @RequestParam(name = "ids", required = false) Long[] ids) {
         return userService.getUsers(from, size, ids);
     }

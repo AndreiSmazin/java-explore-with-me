@@ -47,7 +47,7 @@ public class CompilationController {
     @PatchMapping("/admin/compilations/{id}")
     @ResponseStatus(HttpStatus.OK)
     public CompilationDto updateCompilation(@PathVariable(name = "id") long id,
-                                            @RequestBody UpdateCompilationRequest compilationDto) {
+                                            @Valid @RequestBody UpdateCompilationRequest compilationDto) {
         log.debug("Received PATCH-request /admin/compilations/{} with body: {}", id, compilationDto);
 
         return compilationService.updateCompilation(id, compilationDto);

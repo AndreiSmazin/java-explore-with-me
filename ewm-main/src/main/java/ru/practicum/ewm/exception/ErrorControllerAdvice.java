@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -62,6 +63,30 @@ public class ErrorControllerAdvice {
                 .collect(Collectors.toList());
     }
 
+    @ExceptionHandler(RequestValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ApiError onRequestValidationException(RequestValidationException e) {
+        String message = e.getMessage();
+        log.error("RequestValidationException: {}", message);
+
+        String reason = "Incorrectly made request.";
+        String timestamp = LocalDateTime.now().format(timeFormatter);
+        return new ApiError("BAD_REQUEST", reason, message, timestamp);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ApiError onMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        String message = e.getMessage();
+        log.error("MissingServletRequestParameterException: {}", message);
+
+        String reason = "Incorrectly made request.";
+        String timestamp = LocalDateTime.now().format(timeFormatter);
+        return new ApiError("BAD_REQUEST", reason, message, timestamp);
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
@@ -72,6 +97,30 @@ public class ErrorControllerAdvice {
         String reason = "Integrity constraint has been violated.";
         String timestamp = LocalDateTime.now().format(timeFormatter);
         return new ApiError("CONFLICT", reason, message, timestamp);
+    }
+
+    @ExceptionHandler(EwmStatsServerException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    public ApiError onEwmStatsServerException(EwmStatsServerException e) {
+        String message = e.getMessage();
+        log.error("EwmStatsServerException: {}", message);
+
+        String reason = "Exception on statistics server detected.";
+        String timestamp = LocalDateTime.now().format(timeFormatter);
+        return new ApiError("INTERNAL_SERVER_ERROR", reason, message, timestamp);
+    }
+
+    @ExceptionHandler(Throwable.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    public ApiError onThrowable(Throwable e) {
+        String message = e.getMessage();
+        log.error("Unpredictable error: {}", message);
+
+        String reason = "Unpredictable error on server detected.";
+        String timestamp = LocalDateTime.now().format(timeFormatter);
+        return new ApiError("INTERNAL_SERVER_ERROR", reason, message, timestamp);
     }
 
     @ExceptionHandler(ObjectNotFoundException.class)
@@ -99,7 +148,7 @@ public class ErrorControllerAdvice {
     }
 
     @ExceptionHandler(ViolationOperationRulesException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
     public ApiError onViolationOperationRulesException(ViolationOperationRulesException e) {
         String message = e.getMessage();
@@ -107,7 +156,7 @@ public class ErrorControllerAdvice {
 
         String reason = "For the requested operation the conditions are not met.";
         String timestamp = LocalDateTime.now().format(timeFormatter);
-        return new ApiError("FORBIDDEN", reason, message, timestamp);
+        return new ApiError("CONFLICT", reason, message, timestamp);
     }
 
     private static String getFieldName(ConstraintViolation constraintViolation) {

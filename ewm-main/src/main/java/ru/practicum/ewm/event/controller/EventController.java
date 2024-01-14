@@ -100,12 +100,12 @@ public class EventController {
     public List<EventFullDto> getEventsForAdmin(
             @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
             @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(name = "users") Long[] users,
-            @RequestParam(name = "states") EventState[] states,
-            @RequestParam(name = "categories") Long[] categories,
-            @RequestParam(name = "rangeStart")
+            @RequestParam(name = "users", required = false) Long[] users,
+            @RequestParam(name = "states", required = false) EventState[] states,
+            @RequestParam(name = "categories", required = false) Long[] categories,
+            @RequestParam(name = "rangeStart", required = false)
             @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(name = "rangeEnd")
+            @RequestParam(name = "rangeEnd", required = false)
             @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd) {
         return eventService.getEvents(from, size, users, states, categories, rangeStart, rangeEnd);
     }

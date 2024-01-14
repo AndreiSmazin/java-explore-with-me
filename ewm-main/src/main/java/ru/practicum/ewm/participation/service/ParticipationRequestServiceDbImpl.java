@@ -76,7 +76,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         validateParticipationRequest(participationRequest);
 
         validateRequester(participationRequest, userId);
-        participationRequest.setStatus(ParticipationRequestStatus.REJECTED);
+        participationRequest.setStatus(ParticipationRequestStatus.CANCELED);
 
         return participationRequestMapper.participationRequestToParticipationRequestDto(
                 participationRequestRepository.save(participationRequest)
