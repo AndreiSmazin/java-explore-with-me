@@ -1,7 +1,6 @@
 package ru.practicum.ewm.service;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,7 +46,7 @@ public class StatsServiceDbImpl implements StatsService {
 
         validateTimeRange(rangeStart, rangeEnd);
 
-        BooleanExpression predicates = Expressions.asBoolean(true).isTrue();
+        BooleanBuilder predicates = new BooleanBuilder();
 
         if (uris != null) {
             predicates.and(QEndpointHit.endpointHit.uri.in(uris));

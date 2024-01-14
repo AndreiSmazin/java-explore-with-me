@@ -1,7 +1,7 @@
 package ru.practicum.ewm.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
 import ru.practicum.ewm.dto.ViewStatsDto;
@@ -18,7 +18,7 @@ public class EndpointHitRepositoryCustomImpl implements EndpointHitRepositoryCus
     private EntityManager entityManager;
 
     @Override
-    public List<ViewStatsDto> getViewsStats(String[] uris, BooleanExpression predicates) {
+    public List<ViewStatsDto> getViewsStats(String[] uris, BooleanBuilder predicates) {
         JPAQueryFactory queryFactory = new JPAQueryFactory(entityManager);
         QEndpointHit endpointHit = QEndpointHit.endpointHit;
 
@@ -34,7 +34,7 @@ public class EndpointHitRepositoryCustomImpl implements EndpointHitRepositoryCus
     }
 
     @Override
-    public List<ViewStatsDto> getUniqueViewsStats(String[] uris, BooleanExpression predicates) {
+    public List<ViewStatsDto> getUniqueViewsStats(String[] uris, BooleanBuilder predicates) {
         JPAQueryFactory queryFactory = new JPAQueryFactory(entityManager);
         QEndpointHit endpointHit = QEndpointHit.endpointHit;
 
