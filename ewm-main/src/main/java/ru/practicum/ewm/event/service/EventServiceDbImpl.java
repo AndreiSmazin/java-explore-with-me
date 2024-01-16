@@ -26,14 +26,13 @@ import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.repository.LocationRepository;
+import ru.practicum.ewm.event.validator.EventValidator;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
-import ru.practicum.ewm.exception.RequestValidationException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
 import ru.practicum.ewm.user.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,7 +48,6 @@ public class EventServiceDbImpl implements EventService {
     private final EventMapper eventMapper;
     private final LocationMapper locationMapper;
     private final StatsClient statsClient;
-    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public EventFullDto createNewEvent(long userId, NewEventDto eventDto) {
@@ -59,7 +57,7 @@ public class EventServiceDbImpl implements EventService {
 
         event.setLocation(locationRepository.save(locationMapper.locationDtoToLocation(eventDto.getLocation())));
         event.setCategory(categoryService.checkCategory(eventDto.getCategory()));
-        validateEventDate(event.getEventDate());
+        EventValidator.validateEventDate(event.getEventDate());
         event.setCreatedOn(LocalDateTime.now());
         event.setInitiator(userService.checkUser(userId));
         event.setState(EventState.PENDING);
@@ -92,7 +90,7 @@ public class EventServiceDbImpl implements EventService {
         log.debug("+ updateEventByUser: {}, {}, {}", userId, id, eventDto);
 
         Event event = checkEvent(id);
-        validateState(event.getState());
+        EventValidator.validateState(event.getState());
 
         updateEventFields(event, eventDto);
 
@@ -125,7 +123,7 @@ public class EventServiceDbImpl implements EventService {
             predicates = predicates.and(QEvent.event.category.id.in(categories));
         }
 
-        validateTimeRange(rangeStart, rangeEnd);
+        EventValidator.validateTimeRange(rangeStart, rangeEnd);
         if (rangeStart != null) {
             predicates = predicates.and(QEvent.event.eventDate.after(rangeStart));
         }
@@ -148,7 +146,7 @@ public class EventServiceDbImpl implements EventService {
 
         if (eventDto.getStateAction() != null) {
             if (eventDto.getStateAction().equals(AdminEventStateAction.PUBLISH_EVENT)) {
-                validateStateForPublishing(event.getState());
+                EventValidator.validateStateForPublishing(event.getState());
 
                 LocalDateTime publicationTime = LocalDateTime.now();
 
@@ -161,7 +159,7 @@ public class EventServiceDbImpl implements EventService {
                 event.setPublishedOn(publicationTime);
             }
             if (eventDto.getStateAction().equals(AdminEventStateAction.REJECT_EVENT)) {
-                validateState(event.getState());
+                EventValidator.validateState(event.getState());
 
                 event.setState(EventState.CANCELED);
             }
@@ -188,7 +186,7 @@ public class EventServiceDbImpl implements EventService {
             predicates = predicates.and(QEvent.event.paid.eq(paid));
         }
 
-        validateTimeRange(rangeStart, rangeEnd);
+        EventValidator.validateTimeRange(rangeStart, rangeEnd);
         if (rangeStart != null) {
             predicates = predicates.and(QEvent.event.eventDate.after(rangeStart));
         }
@@ -234,32 +232,6 @@ public class EventServiceDbImpl implements EventService {
         return eventMapper.eventToEventFullDto(event);
     }
 
-    private void validateEventDate(LocalDateTime eventDate) {
-        if (eventDate.isBefore(LocalDateTime.now().plusHours(2L))) {
-            throw new RequestValidationException("Field: EventDate. Error: must be not earlier then 2 hour after" +
-                    " event creation or changing. Value: " + eventDate.format(timeFormatter));
-        }
-    }
-
-    private void validateTimeRange(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
-        if ((rangeStart != null && rangeEnd != null) && (rangeStart.isAfter(rangeEnd))) {
-            throw new RequestValidationException("Field: rangeEnd. Error: must be not earlier then rangeStart." +
-                    " Value: " + rangeEnd.format(timeFormatter));
-        }
-    }
-
-    private void validateState(EventState state) {
-        if (state.equals(EventState.PUBLISHED)) {
-            throw new ViolationOperationRulesException("Only pending or canceled events can be changed");
-        }
-    }
-
-    private void validateStateForPublishing(EventState state) {
-        if (!state.equals(EventState.PENDING)) {
-            throw new ViolationOperationRulesException("Only pending events can be published");
-        }
-    }
-
     private <T extends UpdateEventRequest> void updateEventFields(Event event, T eventDto) {
         if (eventDto.getAnnotation() != null) {
             event.setAnnotation(eventDto.getAnnotation());
@@ -274,7 +246,7 @@ public class EventServiceDbImpl implements EventService {
         }
 
         if (eventDto.getEventDate() != null) {
-            validateEventDate(eventDto.getEventDate());
+            EventValidator.validateEventDate(eventDto.getEventDate());
             event.setEventDate(eventDto.getEventDate());
         }
 

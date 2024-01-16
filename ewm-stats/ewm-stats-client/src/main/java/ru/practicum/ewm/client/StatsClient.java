@@ -16,7 +16,6 @@ import ru.practicum.ewm.exception.EwmStatsServerException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +61,7 @@ public class StatsClient {
                     " response status: " + e.getStatusText());
         }
 
-        return Arrays.asList(stats);
+        return List.of(stats);
     }
 
     private HttpHeaders getDefaultHeaders() {

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.entity.Event;
-import ru.practicum.ewm.event.entity.EventState;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
@@ -16,6 +15,7 @@ import ru.practicum.ewm.participation.entity.ParticipationRequest;
 import ru.practicum.ewm.participation.entity.ParticipationRequestStatus;
 import ru.practicum.ewm.participation.mapper.ParticipationRequestMapper;
 import ru.practicum.ewm.participation.repository.ParticipationRequestRepository;
+import ru.practicum.ewm.participation.validator.ParticipationRequestValidator;
 import ru.practicum.ewm.user.entity.User;
 import ru.practicum.ewm.user.service.UserService;
 
@@ -45,7 +45,7 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         Event event = eventService.checkEvent(eventId);
         User user = userService.checkUser(userId);
 
-        validateEvent(userId, event);
+        ParticipationRequestValidator.validateEvent(userId, event);
         participationRequest.setEvent(event);
         participationRequest.setRequester(user);
         participationRequest.setCreated(LocalDateTime.now());
@@ -73,9 +73,9 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         log.debug("+ cancelParticipationRequestByUser: {}, {}", userId, id);
 
         ParticipationRequest participationRequest = checkParticipationRequest(id);
-        validateParticipationRequest(participationRequest);
+        ParticipationRequestValidator.validateParticipationRequest(participationRequest);
 
-        validateRequester(participationRequest, userId);
+        ParticipationRequestValidator.validateRequester(participationRequest, userId);
         participationRequest.setStatus(ParticipationRequestStatus.CANCELED);
 
         return participationRequestMapper.participationRequestToParticipationRequestDto(
@@ -137,34 +137,10 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
         return makeEventRequestStatusUpdateResult(confirmedParticipationRequests, rejectedParticipationRequests);
     }
 
-
-
-    private void validateEvent(long userId, Event event) {
-        if (userId == event.getInitiator().getId()) {
-            throw new ViolationOperationRulesException("Field: eventId. Error: event must not be created by " +
-                    "requester. Value: " + event.getId());
-        }
-        if (!event.getState().equals(EventState.PUBLISHED)) {
-            throw new ViolationOperationRulesException("Field: eventId. Error: event must not be unpublished. " +
-                    "Value: " + event.getId());
-        }
-        if (event.getParticipantLimit() == event.getConfirmedRequests() && event.getParticipantLimit() != 0) {
-            throw new ViolationOperationRulesException("Field: eventId. Error: participation limit of event is" +
-                    " reached. Value: " + event.getId());
-        }
-    }
-
-    private void validateRequester(ParticipationRequest participationRequest, long userId) {
-        if (participationRequest.getRequester().getId() != userId) {
-            throw new ViolationOperationRulesException("Field: userId. Error: user must be requester of participation" +
-                    " request. Value: " + userId);
-        }
-    }
-
     private List<ParticipationRequest> confirmParticipationRequests(List<ParticipationRequest> participationRequests,
                                               long currentParticipationLimit) {
         List<ParticipationRequest> targetParticipationRequests = participationRequests.stream()
-                .peek((this::validateParticipationRequest))
+                .peek((ParticipationRequestValidator::validateParticipationRequest))
                 .sorted(Comparator.comparing(ParticipationRequest::getCreated))
                 .limit(currentParticipationLimit)
                 .peek(participationRequest -> participationRequest.setStatus(ParticipationRequestStatus.CONFIRMED))
@@ -175,18 +151,11 @@ public class ParticipationRequestServiceDbImpl implements ParticipationRequestSe
 
     private List<ParticipationRequest> rejectParticipationRequests(List<ParticipationRequest> participationRequests) {
         List<ParticipationRequest> targetParticipationRequests = participationRequests.stream()
-                .peek(this::validateParticipationRequest)
+                .peek(ParticipationRequestValidator::validateParticipationRequest)
                 .peek(participationRequest -> participationRequest.setStatus(ParticipationRequestStatus.REJECTED))
                 .collect(Collectors.toList());
 
         return participationRequestRepository.saveAll(targetParticipationRequests);
-    }
-
-    private void validateParticipationRequest(ParticipationRequest participationRequest) {
-        if (!participationRequest.getStatus().equals(ParticipationRequestStatus.PENDING)) {
-            throw new ViolationOperationRulesException("Field: ids. Error: request status must be PENDING" +
-                    " Value: " + participationRequest.getId());
-        }
     }
 
     private EventRequestStatusUpdateResult makeEventRequestStatusUpdateResult(
