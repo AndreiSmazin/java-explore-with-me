@@ -1,5 +1,6 @@
 package ru.practicum.ewm.service;
 
+import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,8 +9,11 @@ import ru.practicum.ewm.dto.EndpointHitCreateDto;
 import ru.practicum.ewm.dto.EndpointHitResponseDto;
 import ru.practicum.ewm.dto.ViewStatsDto;
 import ru.practicum.ewm.entity.EndpointHit;
+import ru.practicum.ewm.entity.QEndpointHit;
+import ru.practicum.ewm.exception.RequestValidationException;
 import ru.practicum.ewm.mapper.EndpointHitMapper;
 import ru.practicum.ewm.repository.EndpointHitRepository;
+import ru.practicum.ewm.repository.EndpointHitRepositoryCustom;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -22,7 +26,9 @@ import java.util.List;
 public class StatsServiceDbImpl implements StatsService {
     private final EndpointHitMapper endpointHitMapper;
     private final EndpointHitRepository endpointHitRepository;
+    private final EndpointHitRepositoryCustom endpointHitRepositoryCustom;
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
 
     @Override
     public EndpointHitResponseDto createNewEndpointHit(EndpointHitCreateDto endpointHitDto) {
@@ -35,21 +41,33 @@ public class StatsServiceDbImpl implements StatsService {
 
     @Override
     public List<ViewStatsDto> getStatsByUri(String[] uris, String start, String end, boolean unique) {
-        LocalDateTime startTime = LocalDateTime.parse(UriUtils.decode(start, StandardCharsets.UTF_8), timeFormatter);
-        LocalDateTime endTime = LocalDateTime.parse(UriUtils.decode(end, StandardCharsets.UTF_8), timeFormatter);
+        LocalDateTime rangeStart = decodeTime(start);
+        LocalDateTime rangeEnd = decodeTime(end);
+
+        validateTimeRange(rangeStart, rangeEnd);
+
+        BooleanBuilder predicates = new BooleanBuilder();
+
+        if (uris != null) {
+            predicates.and(QEndpointHit.endpointHit.uri.in(uris));
+        }
+        predicates.and(QEndpointHit.endpointHit.timestamp.between(rangeStart, rangeEnd));
 
         if (unique) {
-
-            if (uris == null) {
-                return endpointHitRepository.findStatsUniqueId(startTime, endTime);
-            }
-            return endpointHitRepository.findStatsByUriUniqueId(uris, startTime, endTime);
+            return endpointHitRepositoryCustom.getUniqueViewsStats(uris, predicates);
         } else {
+            return endpointHitRepositoryCustom.getViewsStats(uris, predicates);
+        }
+    }
 
-            if (uris == null) {
-                return endpointHitRepository.findStats(startTime, endTime);
-            }
-            return endpointHitRepository.findStatsByUri(uris, startTime, endTime);
+    private LocalDateTime decodeTime(String time) {
+        return LocalDateTime.parse(UriUtils.decode(time, StandardCharsets.UTF_8), timeFormatter);
+    }
+
+    private void validateTimeRange(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+        if ((rangeStart != null && rangeEnd != null) && (rangeStart.isAfter(rangeEnd))) {
+            throw new RequestValidationException("Field: end. Error: must be not earlier then start." +
+                    " Value: " + rangeEnd.format(timeFormatter));
         }
     }
 }
