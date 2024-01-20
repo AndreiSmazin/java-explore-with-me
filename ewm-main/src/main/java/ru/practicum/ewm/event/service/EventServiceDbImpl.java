@@ -23,12 +23,11 @@ import ru.practicum.ewm.event.entity.SortingBy;
 import ru.practicum.ewm.event.entity.UserEventStateAction;
 import ru.practicum.ewm.event.entity.QEvent;
 import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.event.validator.EventValidator;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
+import ru.practicum.ewm.location.service.LocationService;
 import ru.practicum.ewm.user.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,12 +41,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EventServiceDbImpl implements EventService {
     private final EventRepository eventRepository;
-    private final LocationRepository locationRepository;
     private final CategoryService categoryService;
     private final UserService userService;
     private final EventMapper eventMapper;
-    private final LocationMapper locationMapper;
     private final StatsClient statsClient;
+    private final LocationService locationService;
 
     @Override
     public EventFullDto createNewEvent(long userId, NewEventDto eventDto) {
@@ -55,7 +53,7 @@ public class EventServiceDbImpl implements EventService {
 
         Event event = eventMapper.newEventDtoToEvent(eventDto);
 
-        event.setLocation(locationRepository.save(locationMapper.locationDtoToLocation(eventDto.getLocation())));
+        event.setLocation(locationService.checkLocation(eventDto.getLocation()));
         event.setCategory(categoryService.checkCategory(eventDto.getCategory()));
         EventValidator.validateEventDate(event.getEventDate());
         event.setCreatedOn(LocalDateTime.now());
@@ -251,7 +249,7 @@ public class EventServiceDbImpl implements EventService {
         }
 
         if (eventDto.getLocation() != null) {
-            event.setLocation(locationRepository.save(locationMapper.locationDtoToLocation(eventDto.getLocation())));
+            event.setLocation(locationService.checkLocation(eventDto.getLocation()));
         }
 
         if (eventDto.getPaid() != null) {

@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import ru.practicum.ewm.location.dto.NewLocationDto;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -28,7 +29,7 @@ public class NewEventDto {
     private LocalDateTime eventDate;
 
     @NotNull
-    private LocationDto location;
+    private NewLocationDto location;
 
     private Boolean paid;
 

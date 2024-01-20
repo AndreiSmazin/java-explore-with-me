@@ -11,12 +11,22 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
 
+            <column name="name" type="varchar(120)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="description" type="varchar(2000)">
+                <constraints nullable="true"/>
+            </column>
+
             <column name="lat" type="float">
-                <constraints nullable="false"/>
+                <constraints nullable="false"
+                             uniqueConstraintName="lat_lot_unique" unique="true"/>
             </column>
 
             <column name="lon" type="float">
-                <constraints nullable="false"/>
+                <constraints nullable="false"
+                             uniqueConstraintName="lat_lot_unique" unique="true"/>
             </column>
         </createTable>
     </changeSet>

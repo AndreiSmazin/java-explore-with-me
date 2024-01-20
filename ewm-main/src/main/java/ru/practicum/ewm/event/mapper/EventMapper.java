@@ -14,6 +14,7 @@ public interface EventMapper {
     EventFullDto eventToEventFullDto(Event event);
 
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "location", ignore = true)
     @Mapping(source = "paid", target = "paid", defaultValue = "false")
     @Mapping(source = "participantLimit", target = "participantLimit", defaultValue = "0")
     @Mapping(source = "requestModeration", target = "requestModeration", defaultValue = "true")
