@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "42045810-6c4b-4e74-afd3-dbe2d78d4451",
+		"_postman_id": "5d76c926-9193-4347-9bab-726b9b77f6c8",
 		"name": "Test Explore With Me - Feature",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "28264102"
@@ -1138,10 +1138,6 @@
 			"key": "locId",
 			"value": "1",
 			"type": "string"
-		},
-		{
-			"key": "locid",
-			"value": ""
 		},
 		{
 			"key": "response",
