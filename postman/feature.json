@@ -1131,18 +1131,16 @@
 		},
 		{
 			"key": "request_body",
-			"value": null,
-			"type": "string"
+			"value": ""
 		},
 		{
 			"key": "locId",
 			"value": "1",
-			"type": "string"
+			"type": "number"
 		},
 		{
 			"key": "response",
-			"value": "",
-			"type": "string"
+			"value": ""
 		}
 	]
 }
