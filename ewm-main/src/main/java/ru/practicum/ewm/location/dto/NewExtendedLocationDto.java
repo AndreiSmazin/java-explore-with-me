@@ -15,7 +15,7 @@ public class NewExtendedLocationDto {
     @Size(min = 20, max = 2000)
     private String description;
     @NotNull
-    private float lat;
+    private Float lat;
     @NotNull
-    private float lon;
+    private Float lon;
 }
