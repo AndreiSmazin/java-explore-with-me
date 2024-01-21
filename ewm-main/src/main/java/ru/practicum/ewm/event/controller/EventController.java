@@ -143,4 +143,14 @@ public class EventController {
     public EventFullDto getEventForPublic(@PathVariable(name = "id") long id, HttpServletRequest request) {
         return eventService.getPublishedEvent(id, request);
     }
+
+    @GetMapping("/events/location/{locationId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventShortDto> getEventsInLocation(
+            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @PathVariable(name = "locationId") long locationId,
+            HttpServletRequest request) {
+        return eventService.getEventsInLocation(from, size, locationId, request);
+    }
 }

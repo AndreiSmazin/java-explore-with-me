@@ -34,4 +34,6 @@ public interface EventService {
                                              SortingBy sortingBy, HttpServletRequest request);
 
     EventFullDto getPublishedEvent(long id, HttpServletRequest request);
+
+    List<EventShortDto> getEventsInLocation(int from, int size, long locationId, HttpServletRequest request);
 }

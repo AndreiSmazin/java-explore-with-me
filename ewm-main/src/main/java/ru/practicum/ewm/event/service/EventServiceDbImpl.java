@@ -53,7 +53,7 @@ public class EventServiceDbImpl implements EventService {
 
         Event event = eventMapper.newEventDtoToEvent(eventDto);
 
-        event.setLocation(locationService.checkLocation(eventDto.getLocation()));
+        event.setLocation(locationService.getOrCreateLocation(eventDto.getLocation()));
         event.setCategory(categoryService.checkCategory(eventDto.getCategory()));
         EventValidator.validateEventDate(event.getEventDate());
         event.setCreatedOn(LocalDateTime.now());
@@ -230,6 +230,20 @@ public class EventServiceDbImpl implements EventService {
         return eventMapper.eventToEventFullDto(event);
     }
 
+    @Override
+    public List<EventShortDto> getEventsInLocation(int from, int size, long locationId, HttpServletRequest request) {
+        locationService.checkLocation(locationId);
+
+        BooleanExpression predicates = QEvent.event.state.eq(EventState.PUBLISHED)
+                .and(QEvent.event.location.id.eq(locationId));
+
+        sendStatistics(request);
+
+        return eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
+                .map(eventMapper::eventToEventShortDto)
+                .collect(Collectors.toList());
+    }
+
     private <T extends UpdateEventRequest> void updateEventFields(Event event, T eventDto) {
         if (eventDto.getAnnotation() != null) {
             event.setAnnotation(eventDto.getAnnotation());
@@ -249,7 +263,7 @@ public class EventServiceDbImpl implements EventService {
         }
 
         if (eventDto.getLocation() != null) {
-            event.setLocation(locationService.checkLocation(eventDto.getLocation()));
+            event.setLocation(locationService.getOrCreateLocation(eventDto.getLocation()));
         }
 
         if (eventDto.getPaid() != null) {

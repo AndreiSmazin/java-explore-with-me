@@ -12,6 +12,9 @@ import ru.practicum.ewm.location.entity.Location;
 import ru.practicum.ewm.location.mapper.LocationMapper;
 import ru.practicum.ewm.location.repository.LocationRepository;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -32,10 +35,7 @@ public class LocationServiceDbImpl implements LocationService {
     public LocationFullDto updateLocation(long id, UpdateLocationRequest locationDto) {
         log.debug("+ updateLocation: {}, {}", id, locationDto);
 
-        Location location = locationRepository.findById(id).orElseThrow(() -> {
-            String message = "No Location entity with id " + id + " exists!";
-            throw new ObjectNotFoundException("Location", id, message);
-        });
+        Location location = checkLocation(id);
 
         if (locationDto.getName() != null) {
             location.setName(locationDto.getName());
@@ -55,7 +55,7 @@ public class LocationServiceDbImpl implements LocationService {
 
 
     @Override
-    public Location checkLocation(NewLocationDto locationDto) {
+    public Location getOrCreateLocation(NewLocationDto locationDto) {
         Location location = locationRepository.findByLatAndLon(locationDto.getLat(), locationDto.getLon());
         if (location != null) {
             return location;
@@ -63,5 +63,26 @@ public class LocationServiceDbImpl implements LocationService {
             Location newLocation = locationMapper.newLocationDtoToLocation(locationDto);
             return locationRepository.save(newLocation);
         }
+    }
+
+    @Override
+    public Location checkLocation(long id) {
+        return locationRepository.findById(id).orElseThrow(() -> {
+            String message = "No Location entity with id " + id + " exists!";
+            throw new ObjectNotFoundException("Location", id, message);
+        });
+    }
+
+    @Override
+    public List<LocationFullDto> findLocations(Float lat, Float lon, Integer radius) {
+        if (lat != null && lon != null && radius != null) {
+            return locationRepository.findByDistance(lat, lon, (float) radius).stream()
+                    .map(locationMapper::locationToLocationFullDto)
+                    .collect(Collectors.toList());
+        }
+
+        return locationRepository.findAll().stream()
+                .map(locationMapper::locationToLocationFullDto)
+                .collect(Collectors.toList());
     }
 }
