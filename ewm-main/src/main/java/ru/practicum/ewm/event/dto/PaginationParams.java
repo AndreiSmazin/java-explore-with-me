@@ -14,6 +14,6 @@ public class PaginationParams {
     @Min(0)
     private int from = 0;
     @Min(1)
-    @Max(100)
+    @Max(1000)
     private int size = 10;
 }

@@ -3,6 +3,7 @@ package ru.practicum.ewm.category.service;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.dto.NewCategoryDto;
 import ru.practicum.ewm.category.entity.Category;
+import ru.practicum.ewm.event.dto.PaginationParams;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface CategoryService {
 
     Category checkCategory(long id);
 
-    List<CategoryDto> getCategories(int from, int size);
+    List<CategoryDto> getCategories(PaginationParams paginationParams);
 
     CategoryDto getCategoryById(long id);
 }

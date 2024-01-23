@@ -3,6 +3,7 @@ package ru.practicum.ewm.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -31,6 +32,26 @@ public class ErrorControllerAdvice {
                 .map(error -> String.format("Field: %s. Error: %s. Value: %s", error.getField(),
                         error.getDefaultMessage(), error.getRejectedValue()))
                 .peek(message -> log.error("MethodArgumentNotValidException: " + message))
+                .collect(Collectors.toList());
+
+        String reason = "Incorrectly made request.";
+
+        return messages.stream()
+                .map(message -> {
+                    String timestamp = LocalDateTime.now().format(timeFormatter);
+                    return new ApiError("BAD_REQUEST", reason, message, timestamp);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @ExceptionHandler(BindException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public List<ApiError> onBindException(BindException e) {
+        List<String> messages = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s", error.getField(),
+                        error.getDefaultMessage(), error.getRejectedValue()))
+                .peek(message -> log.error("BindException: " + message))
                 .collect(Collectors.toList());
 
         String reason = "Incorrectly made request.";
@@ -111,7 +132,7 @@ public class ErrorControllerAdvice {
         return new ApiError("INTERNAL_SERVER_ERROR", reason, message, timestamp);
     }
 
-    @ExceptionHandler(Throwable.class)
+    /*@ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
     public ApiError onThrowable(Throwable e) {
@@ -121,7 +142,7 @@ public class ErrorControllerAdvice {
         String reason = "Unpredictable error on server detected.";
         String timestamp = LocalDateTime.now().format(timeFormatter);
         return new ApiError("INTERNAL_SERVER_ERROR", reason, message, timestamp);
-    }
+    }*/
 
     @ExceptionHandler(ObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

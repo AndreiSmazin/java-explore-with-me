@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.user.dto.NewUserDto;
 import ru.practicum.ewm.user.dto.UserDto;
@@ -46,13 +47,15 @@ public class UserServiceDbImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getUsers(int from, int size, Long[] ids) {
+    public List<UserDto> getUsers(PaginationParams paginationParams, Long[] ids) {
         BooleanExpression predicates = Expressions.asBoolean(true).isTrue();
 
         if (ids != null) {
             predicates = predicates.and(QUser.user.id.in(ids));
         }
 
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
         return userRepository.findAll(predicates, PageRequest.of(from, size)).stream()
                 .map(userMapper::userToUserDto)
                 .collect(Collectors.toList());

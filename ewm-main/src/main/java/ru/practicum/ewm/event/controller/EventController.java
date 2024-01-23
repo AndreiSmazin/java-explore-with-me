@@ -2,36 +2,30 @@ package ru.practicum.ewm.event.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.GetEventForAdminRequestParams;
+import ru.practicum.ewm.event.dto.GetEventsForPublicRequestParams;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
-import ru.practicum.ewm.event.entity.EventState;
-import ru.practicum.ewm.event.entity.SortingBy;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.participation.dto.ParticipationRequestDto;
 import ru.practicum.ewm.participation.service.ParticipationRequestService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -52,11 +46,9 @@ public class EventController {
 
     @GetMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.OK)
-    public List<EventShortDto> getEventsOfUser(
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
-            @PathVariable(name = "userId") long userId) {
-        return eventService.getEventsOfUser(from, size, userId);
+    public List<EventShortDto> getEventsOfUser(@Valid PaginationParams paginationParams,
+                                               @PathVariable(name = "userId") long userId) {
+        return eventService.getEventsOfUser(paginationParams, userId);
     }
 
     @GetMapping("/users/{userId}/events/{id}")
@@ -98,17 +90,9 @@ public class EventController {
 
     @GetMapping("/admin/events")
     @ResponseStatus(HttpStatus.OK)
-    public List<EventFullDto> getEventsForAdmin(
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(name = "users", required = false) Long[] users,
-            @RequestParam(name = "states", required = false) EventState[] states,
-            @RequestParam(name = "categories", required = false) Long[] categories,
-            @RequestParam(name = "rangeStart", required = false)
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(name = "rangeEnd", required = false)
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd) {
-        return eventService.getEvents(from, size, users, states, categories, rangeStart, rangeEnd);
+    public List<EventFullDto> getEventsForAdmin(@Valid PaginationParams paginationParams,
+                                                GetEventForAdminRequestParams requestParams) {
+        return eventService.getEvents(requestParams, paginationParams);
     }
 
     @PatchMapping("/admin/events/{id}")
@@ -122,21 +106,10 @@ public class EventController {
 
     @GetMapping("/events")
     @ResponseStatus(HttpStatus.OK)
-    public List<EventShortDto> getEventsForPublic(
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(name = "text", required = false) @NotBlank String text,
-            @RequestParam(name = "categories", required = false) Long[] categories,
-            @RequestParam(name = "paid", required = false) Boolean paid,
-            @RequestParam(name = "rangeStart", required = false)
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(name = "rangeEnd", required = false)
-            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-            @RequestParam(name = "onlyAvailable", defaultValue = "false") boolean onlyAvailable,
-            @RequestParam(name = "sort", required = false) SortingBy sortingBy,
-            HttpServletRequest request) {
-        return eventService.getEventsWithFilters(from, size, text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sortingBy, request);
+    public List<EventShortDto> getEventsForPublic(GetEventsForPublicRequestParams requestParams,
+                                                  @Valid PaginationParams paginationParams,
+                                                  HttpServletRequest request) {
+        return eventService.getEventsWithFilters(requestParams, paginationParams, request);
     }
 
     @GetMapping("/events/{id}")
@@ -147,10 +120,9 @@ public class EventController {
 
     @GetMapping("/events/location/{locationId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<EventShortDto> getEventsInLocation(
-            @Valid PaginationParams paginationParams,
-            @PathVariable(name = "locationId") long locationId,
-            HttpServletRequest request) {
+    public List<EventShortDto> getEventsInLocation(@Valid PaginationParams paginationParams,
+                                                   @PathVariable(name = "locationId") long locationId,
+                                                   HttpServletRequest request) {
         return eventService.getEventsInLocation(paginationParams, locationId, request);
     }
 }

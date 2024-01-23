@@ -1,5 +1,6 @@
 package ru.practicum.ewm.user.service;
 
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.user.dto.NewUserDto;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.entity.User;
@@ -11,7 +12,7 @@ public interface UserService {
 
     void deleteUser(long id);
 
-    List<UserDto> getUsers(int from, int size, Long[] ids);
+    List<UserDto> getUsers(PaginationParams paginationParams, Long[] ids);
 
     User checkUser(long id);
 }
