@@ -3,6 +3,7 @@ package ru.practicum.ewm.event.service;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.entity.Event;
@@ -35,5 +36,5 @@ public interface EventService {
 
     EventFullDto getPublishedEvent(long id, HttpServletRequest request);
 
-    List<EventShortDto> getEventsInLocation(int from, int size, long locationId, HttpServletRequest request);
+    List<EventShortDto> getEventsInLocation(PaginationParams paginationParams, long locationId, HttpServletRequest request);
 }

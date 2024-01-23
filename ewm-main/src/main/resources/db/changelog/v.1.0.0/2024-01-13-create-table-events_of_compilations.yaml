@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2024-01-13-create-table-events_of_compilations
+      author: Andrey
+      changes:
+        - createTable:
+            tableName: events_of_compilations
+            columns:
+              - column:
+                  name: compilation_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: events_of_compilations_compilation_id_compilations_id
+                    references: compilations(id)
+
+              - column:
+                  name: event_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: events_of_compilations_event_id_events_id
+                    references: events(id)

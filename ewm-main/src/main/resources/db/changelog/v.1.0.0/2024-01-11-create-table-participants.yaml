@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2024-01-11-create-table-participants
+      author: Andrey
+      changes:
+        - createTable:
+            tableName: participants
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+
+              - column:
+                  name: created
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: event_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: participants_event_id_events_id
+                    references: events(id)
+                    unique: true
+                    uniqueConstraintName: event_id_requester_id_unique
+
+              - column:
+                  name: requester_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: participants_requester_id_users_id
+                    references: users(id)
+                    unique: true
+                    uniqueConstraintName: event_id_requester_id_unique
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false

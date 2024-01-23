@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class LocationServiceDbImpl implements LocationService {
+public class LocationServiceImpl implements LocationService {
     private final LocationRepository locationRepository;
     private final LocationMapper locationMapper;
 

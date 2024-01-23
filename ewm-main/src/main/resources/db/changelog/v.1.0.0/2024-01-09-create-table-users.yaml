@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2024-01-09-create-table-users
+      author: Andrey
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+
+              - column:
+                  name: email
+                  type: varchar(254)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: name
+                  type: varchar(250)
+                  constraints:
+                    nullable: false

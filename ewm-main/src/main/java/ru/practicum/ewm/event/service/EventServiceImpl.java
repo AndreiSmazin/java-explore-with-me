@@ -13,6 +13,7 @@ import ru.practicum.ewm.dto.ViewStatsDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EventServiceDbImpl implements EventService {
+public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final CategoryService categoryService;
     private final UserService userService;
@@ -231,13 +232,16 @@ public class EventServiceDbImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getEventsInLocation(int from, int size, long locationId, HttpServletRequest request) {
+    public List<EventShortDto> getEventsInLocation(PaginationParams paginationParams, long locationId, HttpServletRequest request) {
         locationService.checkLocation(locationId);
 
         BooleanExpression predicates = QEvent.event.state.eq(EventState.PUBLISHED)
                 .and(QEvent.event.location.id.eq(locationId));
 
         sendStatistics(request);
+
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
 
         return eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
                 .map(eventMapper::eventToEventShortDto)

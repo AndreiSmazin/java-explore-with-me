@@ -17,6 +17,7 @@ import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.entity.EventState;
@@ -147,10 +148,9 @@ public class EventController {
     @GetMapping("/events/location/{locationId}")
     @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> getEventsInLocation(
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @Valid PaginationParams paginationParams,
             @PathVariable(name = "locationId") long locationId,
             HttpServletRequest request) {
-        return eventService.getEventsInLocation(from, size, locationId, request);
+        return eventService.getEventsInLocation(paginationParams, locationId, request);
     }
 }
