@@ -37,10 +37,10 @@ public class LocationServiceImpl implements LocationService {
 
         Location location = checkLocation(id);
 
-        if (locationDto.getName() != null) {
+        if ((locationDto.getName() != null) && (!locationDto.getName().isBlank())) {
             location.setName(locationDto.getName());
         }
-        if (locationDto.getDescription() != null) {
+        if ((locationDto.getDescription() != null) && (!locationDto.getDescription().isBlank())) {
             location.setDescription(locationDto.getDescription());
         }
         if (locationDto.getLat() != null) {

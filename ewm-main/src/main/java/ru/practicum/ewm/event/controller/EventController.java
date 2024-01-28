@@ -45,21 +45,18 @@ public class EventController {
     }
 
     @GetMapping("/users/{userId}/events")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> getEventsOfUser(@Valid PaginationParams paginationParams,
                                                @PathVariable(name = "userId") long userId) {
         return eventService.getEventsOfUser(paginationParams, userId);
     }
 
     @GetMapping("/users/{userId}/events/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto getEventById(@PathVariable(name = "userId") long userId,
                                      @PathVariable(name = "id") long id) {
         return eventService.getEventById(id);
     }
 
     @PatchMapping("/users/{userId}/events/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto updateEventByUser(@PathVariable(name = "userId") long userId,
                                           @PathVariable(name = "id") long id,
                                           @Valid @RequestBody UpdateEventUserRequest eventDto) {
@@ -69,14 +66,12 @@ public class EventController {
     }
 
     @GetMapping("/users/{userId}/events/{id}/requests")
-    @ResponseStatus(HttpStatus.OK)
     public List<ParticipationRequestDto> getParticipationRequestsOfEvent(@PathVariable(name = "userId") long userId,
                                                                          @PathVariable(name = "id") long id) {
         return participationRequestService.getParticipationRequestsOfEvent(userId, id);
     }
 
     @PatchMapping("/users/{userId}/events/{id}/requests")
-    @ResponseStatus(HttpStatus.OK)
     public EventRequestStatusUpdateResult updateParticipationRequestsOfEvent(
             @PathVariable(name = "userId") long userId,
             @PathVariable(name = "id") long id,
@@ -89,14 +84,12 @@ public class EventController {
     }
 
     @GetMapping("/admin/events")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventFullDto> getEventsForAdmin(@Valid PaginationParams paginationParams,
                                                 GetEventForAdminRequestParams requestParams) {
         return eventService.getEvents(requestParams, paginationParams);
     }
 
     @PatchMapping("/admin/events/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto updateEventByAdmin(@PathVariable(name = "id") long id,
                                            @Valid @RequestBody UpdateEventAdminRequest eventDto) {
         log.debug("Received PATCH-request /admin/events/{} with body: {}", id, eventDto);
@@ -105,7 +98,6 @@ public class EventController {
     }
 
     @GetMapping("/events")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> getEventsForPublic(GetEventsForPublicRequestParams requestParams,
                                                   @Valid PaginationParams paginationParams,
                                                   HttpServletRequest request) {
@@ -113,13 +105,11 @@ public class EventController {
     }
 
     @GetMapping("/events/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public EventFullDto getEventForPublic(@PathVariable(name = "id") long id, HttpServletRequest request) {
         return eventService.getPublishedEvent(id, request);
     }
 
     @GetMapping("/events/location/{locationId}")
-    @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> getEventsInLocation(@Valid PaginationParams paginationParams,
                                                    @PathVariable(name = "locationId") long locationId,
                                                    HttpServletRequest request) {

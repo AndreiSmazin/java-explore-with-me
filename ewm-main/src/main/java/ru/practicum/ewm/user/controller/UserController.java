@@ -46,7 +46,6 @@ public class UserController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<UserDto> getUsers(@Valid PaginationParams paginationParams,
                                   @RequestParam(name = "ids", required = false) Long[] ids) {
         return userService.getUsers(paginationParams, ids);

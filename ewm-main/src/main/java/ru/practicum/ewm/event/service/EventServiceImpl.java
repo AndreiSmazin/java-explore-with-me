@@ -273,7 +273,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private <T extends UpdateEventRequest> void updateEventFields(Event event, T eventDto) {
-        if (eventDto.getAnnotation() != null) {
+        if ((eventDto.getAnnotation() != null) && (!eventDto.getAnnotation().isBlank())) {
             event.setAnnotation(eventDto.getAnnotation());
         }
 
@@ -281,7 +281,7 @@ public class EventServiceImpl implements EventService {
             event.setCategory(categoryService.checkCategory(eventDto.getCategory()));
         }
 
-        if (eventDto.getDescription() != null) {
+        if ((eventDto.getDescription() != null) && (!eventDto.getDescription().isBlank())) {
             event.setDescription(eventDto.getDescription());
         }
 
@@ -306,7 +306,7 @@ public class EventServiceImpl implements EventService {
             event.setRequestModeration(eventDto.getRequestModeration());
         }
 
-        if (eventDto.getTitle() != null) {
+        if ((eventDto.getTitle() != null) && (!eventDto.getTitle().isBlank())) {
             event.setTitle(eventDto.getTitle());
         }
     }

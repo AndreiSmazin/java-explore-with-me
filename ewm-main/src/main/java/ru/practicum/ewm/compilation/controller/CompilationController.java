@@ -44,7 +44,6 @@ public class CompilationController {
     }
 
     @PatchMapping("/admin/compilations/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CompilationDto updateCompilation(@PathVariable(name = "id") long id,
                                             @Valid @RequestBody UpdateCompilationRequest compilationDto) {
         log.debug("Received PATCH-request /admin/compilations/{} with body: {}", id, compilationDto);
@@ -53,7 +52,6 @@ public class CompilationController {
     }
 
     @GetMapping("/compilations")
-    @ResponseStatus(HttpStatus.OK)
     public List<CompilationDto> getCompilations(
             @Valid PaginationParams paginationParams,
             @RequestParam(name = "pinned", required = false) Boolean pinned) {
@@ -61,7 +59,6 @@ public class CompilationController {
     }
 
     @GetMapping("/compilations/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CompilationDto getCompilationById(@PathVariable(name = "id") long id) {
         return compilationService.getCompilationById(id);
     }

@@ -44,7 +44,6 @@ public class CategoryController {
     }
 
     @PatchMapping("/admin/categories/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CategoryDto updateCategory(@PathVariable(name = "id") long id,
                                       @Valid @RequestBody NewCategoryDto categoryDto) {
         log.debug("Received PATCH-request /admin/categories/{} with body: {}", id, categoryDto);
@@ -53,13 +52,11 @@ public class CategoryController {
     }
 
     @GetMapping("/categories")
-    @ResponseStatus(HttpStatus.OK)
     public List<CategoryDto> getCategories(@Valid PaginationParams paginationParams) {
         return categoryService.getCategories(paginationParams);
     }
 
     @GetMapping("/categories/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CategoryDto getCategoryById(@PathVariable(name = "id") long id) {
         return categoryService.getCategoryById(id);
     }

@@ -34,7 +34,6 @@ public class LocationController {
     }
 
     @PatchMapping("/admin/locations/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public LocationFullDto updateLocation(@PathVariable(name = "id") long id,
                                           @Valid @RequestBody UpdateLocationRequest locationDto) {
         log.debug("Received PATCH-request /admin/locations/{} with body: {}", id, locationDto);
@@ -43,7 +42,6 @@ public class LocationController {
     }
 
     @GetMapping("/locations")
-    @ResponseStatus(HttpStatus.OK)
     public List<LocationFullDto> findLocations(@RequestParam(name = "lat", required = false) Float lat,
                                                @RequestParam(name = "lon", required = false) Float lon,
                                                @RequestParam(name = "radius", required = false) Integer radius) {
