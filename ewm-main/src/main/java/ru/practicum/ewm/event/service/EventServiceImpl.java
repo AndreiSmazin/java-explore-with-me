@@ -12,7 +12,10 @@ import ru.practicum.ewm.dto.EndpointHitCreateDto;
 import ru.practicum.ewm.dto.ViewStatsDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.GetEventForAdminRequestParams;
+import ru.practicum.ewm.event.dto.GetEventsForPublicRequestParams;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
@@ -23,15 +26,15 @@ import ru.practicum.ewm.event.entity.SortingBy;
 import ru.practicum.ewm.event.entity.UserEventStateAction;
 import ru.practicum.ewm.event.entity.QEvent;
 import ru.practicum.ewm.event.mapper.EventMapper;
-import ru.practicum.ewm.event.mapper.LocationMapper;
 import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.event.repository.LocationRepository;
 import ru.practicum.ewm.event.validator.EventValidator;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
+import ru.practicum.ewm.location.service.LocationService;
 import ru.practicum.ewm.user.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -40,14 +43,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EventServiceDbImpl implements EventService {
+public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
-    private final LocationRepository locationRepository;
     private final CategoryService categoryService;
     private final UserService userService;
     private final EventMapper eventMapper;
-    private final LocationMapper locationMapper;
     private final StatsClient statsClient;
+    private final LocationService locationService;
 
     @Override
     public EventFullDto createNewEvent(long userId, NewEventDto eventDto) {
@@ -55,7 +57,7 @@ public class EventServiceDbImpl implements EventService {
 
         Event event = eventMapper.newEventDtoToEvent(eventDto);
 
-        event.setLocation(locationRepository.save(locationMapper.locationDtoToLocation(eventDto.getLocation())));
+        event.setLocation(locationService.getOrCreateLocation(eventDto.getLocation()));
         event.setCategory(categoryService.checkCategory(eventDto.getCategory()));
         EventValidator.validateEventDate(event.getEventDate());
         event.setCreatedOn(LocalDateTime.now());
@@ -66,7 +68,9 @@ public class EventServiceDbImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getEventsOfUser(int from, int size, long userId) {
+    public List<EventShortDto> getEventsOfUser(PaginationParams paginationParams, long userId) {
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
         return eventRepository.findEventByInitiatorId(PageRequest.of(from, size), userId).stream()
                 .map(eventMapper::eventToEventShortDto)
                 .collect(Collectors.toList());
@@ -109,20 +113,27 @@ public class EventServiceDbImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> getEvents(int from, int size, Long[] users, EventState[] states, Long[] categories,
-                                        LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+    public List<EventFullDto> getEvents(GetEventForAdminRequestParams requestParams,
+                                        PaginationParams paginationParams) {
         BooleanExpression predicates = Expressions.asBoolean(true).isTrue();
 
+        Long[] users = requestParams.getUsers();
         if (users != null) {
             predicates = predicates.and(QEvent.event.initiator.id.in(users));
         }
+
+        EventState[] states = requestParams.getStates();
         if (states != null) {
             predicates = predicates.and(QEvent.event.state.in(states));
         }
+
+        Long[] categories = requestParams.getCategories();
         if (categories != null) {
             predicates = predicates.and(QEvent.event.category.id.in(categories));
         }
 
+        LocalDateTime rangeStart = requestParams.getRangeStart();
+        LocalDateTime rangeEnd = requestParams.getRangeEnd();
         EventValidator.validateTimeRange(rangeStart, rangeEnd);
         if (rangeStart != null) {
             predicates = predicates.and(QEvent.event.eventDate.after(rangeStart));
@@ -131,6 +142,8 @@ public class EventServiceDbImpl implements EventService {
             predicates = predicates.and(QEvent.event.eventDate.before(rangeEnd));
         }
 
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
         return eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
                 .map(eventMapper::eventToEventFullDto)
                 .collect(Collectors.toList());
@@ -169,23 +182,28 @@ public class EventServiceDbImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> getEventsWithFilters(int from, int size, String text, Long[] categories, Boolean paid,
-                                                    LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                    boolean onlyAvailable, SortingBy sortingBy,
-                                                    HttpServletRequest request) {
+    public List<EventShortDto> getEventsWithFilters(GetEventsForPublicRequestParams requestParams,
+                                                    PaginationParams paginationParams, HttpServletRequest request) {
         BooleanExpression predicates = QEvent.event.state.eq(EventState.PUBLISHED);
 
+        String text = requestParams.getText();
         if (text != null) {
             predicates = predicates.and(QEvent.event.annotation.likeIgnoreCase("%" + text + "%")
                     .or(QEvent.event.description.likeIgnoreCase("%" + text + "%")));
         }
+
+        Long[] categories = requestParams.getCategories();
         if (categories != null) {
             predicates = predicates.and(QEvent.event.category.id.in(categories));
         }
+
+        Boolean paid = requestParams.getPaid();
         if (paid != null) {
             predicates = predicates.and(QEvent.event.paid.eq(paid));
         }
 
+        LocalDateTime rangeStart = requestParams.getRangeStart();
+        LocalDateTime rangeEnd = requestParams.getRangeEnd();
         EventValidator.validateTimeRange(rangeStart, rangeEnd);
         if (rangeStart != null) {
             predicates = predicates.and(QEvent.event.eventDate.after(rangeStart));
@@ -197,15 +215,19 @@ public class EventServiceDbImpl implements EventService {
             predicates = predicates.and(QEvent.event.eventDate.after(LocalDateTime.now()));
         }
 
+        boolean onlyAvailable = requestParams.isOnlyAvailable();
         if (onlyAvailable) {
             predicates = predicates.and(QEvent.event.confirmedRequests.ne(QEvent.event.participantLimit.longValue())
                     .or(QEvent.event.participantLimit.eq(0)));
         }
 
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
         List<EventShortDto> events = eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
                 .map(eventMapper::eventToEventShortDto)
                 .collect(Collectors.toList());
 
+        SortingBy sortingBy = requestParams.getSortingBy();
         if (sortingBy != null) {
             if (sortingBy.equals(SortingBy.VIEWS)) {
                 events.sort(Comparator.comparingLong(EventShortDto::getViews));
@@ -232,8 +254,26 @@ public class EventServiceDbImpl implements EventService {
         return eventMapper.eventToEventFullDto(event);
     }
 
+    @Override
+    public List<EventShortDto> getEventsInLocation(@Valid PaginationParams paginationParams, long locationId,
+                                                   HttpServletRequest request) {
+        locationService.checkLocation(locationId);
+
+        BooleanExpression predicates = QEvent.event.state.eq(EventState.PUBLISHED)
+                .and(QEvent.event.location.id.eq(locationId));
+
+        sendStatistics(request);
+
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
+
+        return eventRepository.findAll(predicates, PageRequest.of(from, size)).stream()
+                .map(eventMapper::eventToEventShortDto)
+                .collect(Collectors.toList());
+    }
+
     private <T extends UpdateEventRequest> void updateEventFields(Event event, T eventDto) {
-        if (eventDto.getAnnotation() != null) {
+        if ((eventDto.getAnnotation() != null) && (!eventDto.getAnnotation().isBlank())) {
             event.setAnnotation(eventDto.getAnnotation());
         }
 
@@ -241,7 +281,7 @@ public class EventServiceDbImpl implements EventService {
             event.setCategory(categoryService.checkCategory(eventDto.getCategory()));
         }
 
-        if (eventDto.getDescription() != null) {
+        if ((eventDto.getDescription() != null) && (!eventDto.getDescription().isBlank())) {
             event.setDescription(eventDto.getDescription());
         }
 
@@ -251,7 +291,7 @@ public class EventServiceDbImpl implements EventService {
         }
 
         if (eventDto.getLocation() != null) {
-            event.setLocation(locationRepository.save(locationMapper.locationDtoToLocation(eventDto.getLocation())));
+            event.setLocation(locationService.getOrCreateLocation(eventDto.getLocation()));
         }
 
         if (eventDto.getPaid() != null) {
@@ -266,7 +306,7 @@ public class EventServiceDbImpl implements EventService {
             event.setRequestModeration(eventDto.getRequestModeration());
         }
 
-        if (eventDto.getTitle() != null) {
+        if ((eventDto.getTitle() != null) && (!eventDto.getTitle().isBlank())) {
             event.setTitle(eventDto.getTitle());
         }
     }

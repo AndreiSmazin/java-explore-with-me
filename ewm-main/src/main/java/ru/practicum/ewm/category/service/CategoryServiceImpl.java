@@ -10,6 +10,7 @@ import ru.practicum.ewm.category.dto.NewCategoryDto;
 import ru.practicum.ewm.category.entity.Category;
 import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.repository.CategoryRepository;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 import ru.practicum.ewm.exception.ViolationOperationRulesException;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CategoryServiceDbImpl implements CategoryService {
+public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
@@ -68,7 +69,9 @@ public class CategoryServiceDbImpl implements CategoryService {
     }
 
     @Override
-    public List<CategoryDto> getCategories(int from, int size) {
+    public List<CategoryDto> getCategories(PaginationParams paginationParams) {
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
         return categoryRepository.findAll(PageRequest.of(from, size)).stream()
                 .map(categoryMapper::categoryToCategoryDto)
                 .collect(Collectors.toList());

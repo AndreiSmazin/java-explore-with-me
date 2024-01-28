@@ -3,6 +3,7 @@ package ru.practicum.ewm.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.practicum.ewm.event.entity.UserEventStateAction;
+import ru.practicum.ewm.location.dto.NewLocationDto;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -23,7 +24,7 @@ public class UpdateEventUserRequest extends UpdateEventRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private LocationDto location;
+    private NewLocationDto location;
 
     private Boolean paid;
 

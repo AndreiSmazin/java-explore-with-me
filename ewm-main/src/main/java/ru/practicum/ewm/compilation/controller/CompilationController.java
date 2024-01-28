@@ -16,10 +16,9 @@ import ru.practicum.ewm.compilation.dto.CompilationDto;
 import ru.practicum.ewm.compilation.dto.NewCompilationDto;
 import ru.practicum.ewm.compilation.dto.UpdateCompilationRequest;
 import ru.practicum.ewm.compilation.service.CompilationService;
+import ru.practicum.ewm.event.dto.PaginationParams;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.List;
 
 @RestController
@@ -45,7 +44,6 @@ public class CompilationController {
     }
 
     @PatchMapping("/admin/compilations/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CompilationDto updateCompilation(@PathVariable(name = "id") long id,
                                             @Valid @RequestBody UpdateCompilationRequest compilationDto) {
         log.debug("Received PATCH-request /admin/compilations/{} with body: {}", id, compilationDto);
@@ -54,16 +52,13 @@ public class CompilationController {
     }
 
     @GetMapping("/compilations")
-    @ResponseStatus(HttpStatus.OK)
     public List<CompilationDto> getCompilations(
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @Valid PaginationParams paginationParams,
             @RequestParam(name = "pinned", required = false) Boolean pinned) {
-        return compilationService.getCompilations(from, size, pinned);
+        return compilationService.getCompilations(paginationParams, pinned);
     }
 
     @GetMapping("/compilations/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CompilationDto getCompilationById(@PathVariable(name = "id") long id) {
         return compilationService.getCompilationById(id);
     }

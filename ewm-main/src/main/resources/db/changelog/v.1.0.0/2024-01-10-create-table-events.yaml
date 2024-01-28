@@ -1,0 +1,108 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2024-01-10-create-table-events
+      author: Andrey
+      changes:
+        - createTable:
+            tableName: events
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+
+              - column:
+                  name: annotation
+                  type: varchar(2000)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: category_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: events_category_id_categories_id
+                    references: categories(id)
+
+              - column:
+                  name: description
+                  type: varchar(7000)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: event_date
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: location_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: events_location_id_locations_id
+                    references: locations(id)
+
+              - column:
+                  name: paid
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: participant_limit
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: request_moderation
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: title
+                  type: varchar(120)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_on
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: published_on
+                  type: timestamp without time zone
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: initiator_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: events_initiator_id_users_id
+                    references: users(id)
+
+              - column:
+                  name: state
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: confirmed_requests
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: views
+                  type: bigint
+                  constraints:
+                    nullable: false

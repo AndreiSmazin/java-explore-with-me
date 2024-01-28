@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2024-01-21-create-function-distance
+      author: Andrey
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: db/changelog/v.1.0.0/create-function-distance.sql

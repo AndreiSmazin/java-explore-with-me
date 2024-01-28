@@ -10,15 +10,14 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.dto.NewCategoryDto;
 import ru.practicum.ewm.category.service.CategoryService;
+import ru.practicum.ewm.event.dto.PaginationParams;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import java.util.List;
 
 @RestController
@@ -45,7 +44,6 @@ public class CategoryController {
     }
 
     @PatchMapping("/admin/categories/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CategoryDto updateCategory(@PathVariable(name = "id") long id,
                                       @Valid @RequestBody NewCategoryDto categoryDto) {
         log.debug("Received PATCH-request /admin/categories/{} with body: {}", id, categoryDto);
@@ -54,15 +52,11 @@ public class CategoryController {
     }
 
     @GetMapping("/categories")
-    @ResponseStatus(HttpStatus.OK)
-    public List<CategoryDto> getCategories(
-            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-            @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
-        return categoryService.getCategories(from, size);
+    public List<CategoryDto> getCategories(@Valid PaginationParams paginationParams) {
+        return categoryService.getCategories(paginationParams);
     }
 
     @GetMapping("/categories/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public CategoryDto getCategoryById(@PathVariable(name = "id") long id) {
         return categoryService.getCategoryById(id);
     }

@@ -17,7 +17,7 @@ spring:
     username: ${MAIN_DATASOURCE_USER}
     password: ${MAIN_DATASOURCE_PASSWORD}
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
 logging:
   level:
     org:

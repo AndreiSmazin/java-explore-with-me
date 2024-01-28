@@ -14,6 +14,7 @@ import ru.practicum.ewm.compilation.entity.Compilation;
 import ru.practicum.ewm.compilation.entity.QCompilation;
 import ru.practicum.ewm.compilation.mapper.CompilationMapper;
 import ru.practicum.ewm.compilation.repository.CompilationRepository;
+import ru.practicum.ewm.event.dto.PaginationParams;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.ObjectNotFoundException;
 
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CompilationServiceDbImpl implements CompilationService {
+public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final CompilationMapper compilationMapper;
     private final EventRepository eventRepository;
@@ -67,7 +68,7 @@ public class CompilationServiceDbImpl implements CompilationService {
         if (compilationDto.getPinned() != null) {
             compilation.setPinned(compilationDto.getPinned());
         }
-        if (compilationDto.getTitle() != null) {
+        if ((compilationDto.getTitle() != null) && (!compilationDto.getTitle().isBlank())) {
             compilation.setTitle(compilationDto.getTitle());
         }
 
@@ -83,13 +84,15 @@ public class CompilationServiceDbImpl implements CompilationService {
     }
 
     @Override
-    public List<CompilationDto> getCompilations(int from, int size, Boolean pinned) {
+    public List<CompilationDto> getCompilations(PaginationParams paginationParams, Boolean pinned) {
         BooleanExpression predicates = Expressions.asBoolean(true).isTrue();
 
         if (pinned != null) {
             predicates = predicates.and(QCompilation.compilation.pinned.eq(pinned));
         }
 
+        int from = paginationParams.getFrom();
+        int size = paginationParams.getSize();
         return compilationRepository.findAll(predicates, PageRequest.of(from, size)).stream()
                 .map(compilationMapper::compilationToCompilationDto)
                 .collect(Collectors.toList());

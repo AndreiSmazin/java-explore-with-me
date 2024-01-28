@@ -1,5 +1,7 @@
 package ru.practicum.ewm.event.dto;
 
+import ru.practicum.ewm.location.dto.NewLocationDto;
+
 import java.time.LocalDateTime;
 
 public abstract class UpdateEventRequest {
@@ -11,7 +13,7 @@ public abstract class UpdateEventRequest {
 
     public abstract LocalDateTime getEventDate();
 
-    public abstract LocationDto getLocation();
+    public abstract NewLocationDto getLocation();
 
     public abstract Boolean getPaid();
 

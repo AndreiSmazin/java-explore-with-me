@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.practicum.ewm.category.entity.Category;
 import ru.practicum.ewm.compilation.entity.Compilation;
+import ru.practicum.ewm.location.entity.Location;
 import ru.practicum.ewm.user.entity.User;
 
 import javax.persistence.Column;

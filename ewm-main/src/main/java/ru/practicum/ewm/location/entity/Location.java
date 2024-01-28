@@ -1,4 +1,4 @@
-package ru.practicum.ewm.event.entity;
+package ru.practicum.ewm.location.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +23,12 @@ public class Location {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "description", nullable = false)
+    private String description;
+
     @Column(name = "lat", nullable = false)
     private float lat;
 
@@ -46,6 +52,8 @@ public class Location {
     public String toString() {
         return "Location{" +
                 "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
                 ", lat=" + lat +
                 ", lon=" + lon +
                 '}';

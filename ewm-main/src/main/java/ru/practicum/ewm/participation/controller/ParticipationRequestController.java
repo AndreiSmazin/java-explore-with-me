@@ -31,13 +31,11 @@ public class ParticipationRequestController {
     }
 
     @GetMapping("/users/{userId}/requests")
-    @ResponseStatus(HttpStatus.OK)
     public List<ParticipationRequestDto> getParticipationRequestsOfUser(@PathVariable(name = "userId") long userId) {
         return participationRequestService.getParticipationRequestsOfUser(userId);
     }
 
     @PatchMapping("/users/{userId}/requests/{id}/cancel")
-    @ResponseStatus(HttpStatus.OK)
     public ParticipationRequestDto cancelParticipationRequestByUser(@PathVariable(name = "userId") long userId,
                                                                     @PathVariable(name = "id") long id) {
         log.debug("Received PATCH-request /users/{}/requests/{}/cancel", userId, id);

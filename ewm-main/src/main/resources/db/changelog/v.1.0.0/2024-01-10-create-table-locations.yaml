@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2024-01-10-create-table-locations
+      author: Andrey
+      changes:
+        - createTable:
+            tableName: locations
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+
+              - column:
+                  name: name
+                  type: varchar(120)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: description
+                  type: varchar(2000)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: lat
+                  type: float
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: lat_lot_unique
+
+              - column:
+                  name: lon
+                  type: float
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: lat_lot_unique
